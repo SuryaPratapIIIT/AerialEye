@@ -6,6 +6,7 @@ import type {
 } from '../types/analysis'
 
 const REQUEST_TIMEOUT_MS = 180_000
+export type AnalysisMode = 'block_analysis' | 'naming_analysis'
 
 function getApiBaseUrl(): string {
   const configured = import.meta.env.VITE_ANALYSIS_API_BASE as string | undefined
@@ -76,13 +77,17 @@ function isAnalysisSuccess(payload: unknown): payload is AnalysisApiSuccess {
   )
 }
 
-function buildAnalysisForm(imageFile: File): FormData {
+function buildAnalysisForm(imageFile: File, analysisMode: AnalysisMode): FormData {
   const form = new FormData()
   form.append('image', imageFile)
+  form.append('analysis_mode', analysisMode)
   return form
 }
 
-export async function analyzeSpatialImage(imageFile: File): Promise<AnalysisApiResponse> {
+export async function analyzeSpatialImage(
+  imageFile: File,
+  analysisMode: AnalysisMode = 'block_analysis',
+): Promise<AnalysisApiResponse> {
   const endpoints = resolveCandidateEndpoints('/api/analyze')
   const attemptErrors: string[] = []
 
@@ -93,7 +98,7 @@ export async function analyzeSpatialImage(imageFile: File): Promise<AnalysisApiR
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        body: buildAnalysisForm(imageFile),
+        body: buildAnalysisForm(imageFile, analysisMode),
         signal: controller.signal,
       })
 

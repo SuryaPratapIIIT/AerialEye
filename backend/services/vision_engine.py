@@ -4,7 +4,7 @@ import logging
 import mimetypes
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 from PIL import Image
@@ -250,6 +250,7 @@ class AnalysisResult:
     transformed: Dict[str, Any]
     raw_text: str
     warnings: List[str]
+    response_extras: Dict[str, Any] = field(default_factory=dict)
 
 
 def _default_asset(index: int = 1) -> Dict[str, Any]:

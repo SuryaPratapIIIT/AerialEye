@@ -173,6 +173,8 @@ export interface TransformedPayload {
 export interface AnalysisApiSuccess {
   success: true
   request_id: string
+  analysis_mode?: 'block_analysis' | 'naming_analysis' | string
+  naming_visualization_data_url?: string
   data: StructuredAnalysis
   transformed: TransformedPayload
   warnings: string[]

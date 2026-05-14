@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import Any, Dict
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.services.vision_engine import VisionEngineError, analyze_spatial_image
+from backend.services.naming_engine import analyze_naming_image
 
 load_dotenv()
 
@@ -27,6 +28,7 @@ ALLOWED_IMAGE_TYPES = {
     "image/webp",
 }
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+ANALYSIS_MODES = {"block_analysis", "naming_analysis"}
 
 app = FastAPI(
     title="SpatialScan AI Analysis API",
@@ -76,9 +78,29 @@ def health() -> Dict[str, Any]:
 
 
 @app.post("/api/analyze")
-async def analyze_image(image: UploadFile = File(...)) -> Dict[str, Any]:
+async def analyze_image(
+    image: UploadFile = File(...),
+    analysis_mode: str = Form("block_analysis"),
+) -> Dict[str, Any]:
     request_id = str(uuid.uuid4())
-    logger.info("Incoming analyze request id=%s filename=%s content_type=%s", request_id, image.filename, image.content_type)
+    logger.info(
+        "Incoming analyze request id=%s mode=%s filename=%s content_type=%s",
+        request_id,
+        analysis_mode,
+        image.filename,
+        image.content_type,
+    )
+
+    if analysis_mode not in ANALYSIS_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=_error_response(
+                request_id,
+                "invalid_analysis_mode",
+                "Unsupported analysis mode.",
+                f"Use one of: {', '.join(sorted(ANALYSIS_MODES))}. Received: {analysis_mode}",
+            ),
+        )
 
     if image.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
@@ -120,21 +142,29 @@ async def analyze_image(image: UploadFile = File(...)) -> Dict[str, Any]:
             temp_file.write(file_bytes)
             temp_path = temp_file.name
 
-        result = analyze_spatial_image(temp_path)
+        if analysis_mode == "naming_analysis":
+            result = analyze_naming_image(temp_path)
+        else:
+            result = analyze_spatial_image(temp_path)
         logger.info(
-            "Analyze request complete id=%s assets=%s warnings=%s",
+            "Analyze request complete id=%s mode=%s assets=%s warnings=%s",
             request_id,
+            analysis_mode,
             len(result.validated_response.get("detected_assets", [])),
             len(result.warnings),
         )
 
-        return {
+        response_payload = {
             "success": True,
             "request_id": request_id,
+            "analysis_mode": analysis_mode,
             "data": result.validated_response,
             "transformed": result.transformed,
             "warnings": result.warnings,
         }
+        if result.response_extras:
+            response_payload.update(result.response_extras)
+        return response_payload
     except VisionEngineError as err:
         logger.exception("Vision analysis error id=%s", request_id)
         raise HTTPException(

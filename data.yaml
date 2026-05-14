@@ -1,0 +1,11 @@
+
+path: /kaggle/working/yolo_dataset
+
+train: images/train
+val: images/val
+
+names:
+  0: buildings
+  1: trees
+  2: parks_open_spaces
+  3: water

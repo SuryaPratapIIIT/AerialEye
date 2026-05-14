@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import LoadingOverlay from '../components/LoadingOverlay'
 import { saveLatestAnalysis } from '../lib/analysis-storage'
-import { analyzeSpatialImage, exportGeoJSON, exportCSV } from '../utils/api'
+import { analyzeSpatialImage, exportGeoJSON, exportCSV, type AnalysisMode } from '../utils/api'
 import type { AnalysisApiSuccess, DetectedAsset, NormalizedPoint } from '../types/analysis'
 
 type ViewMode = 'upload' | 'results'
@@ -41,6 +41,10 @@ interface SampleImage {
 const TARGET_ASPECT_RATIO = 4 / 3
 const LOCAL_SAMPLE_BASES = ['image1', 'image2', 'image3'] as const
 const LOCAL_SAMPLE_EXTENSIONS = ['', '.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff'] as const
+const ANALYSIS_MODE_LABELS: Record<AnalysisMode, string> = {
+  block_analysis: 'Block Analysis',
+  naming_analysis: 'Naming Analysis',
+}
 
 function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0
@@ -161,6 +165,8 @@ export default function Detect() {
   const [exportingCSV, setExportingCSV] = useState(false)
   const [imageNaturalSize, setImageNaturalSize] = useState<{ width: number; height: number } | null>(null)
   const [sampleImages, setSampleImages] = useState<SampleImage[]>([])
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('block_analysis')
+  const [namingVisualizationUrl, setNamingVisualizationUrl] = useState<string | null>(null)
 
   const layerMenuRef = useRef<HTMLDivElement>(null)
   const fullscreenRef = useRef<HTMLDivElement>(null)
@@ -326,6 +332,7 @@ export default function Detect() {
       setEnabledLayers([])
       setHoveredAssetId(null)
       setImageNaturalSize(null)
+      setNamingVisualizationUrl(null)
     },
     [setPreviewFromFile],
   )
@@ -352,6 +359,7 @@ export default function Detect() {
         setEnabledLayers([])
         setHoveredAssetId(null)
         setImageNaturalSize(null)
+        setNamingVisualizationUrl(null)
       } catch (err) {
         console.error('Failed to load local sample image as file:', err)
       }
@@ -367,6 +375,7 @@ export default function Detect() {
     setEnabledLayers([])
     setHoveredAssetId(null)
     setImageNaturalSize(null)
+    setNamingVisualizationUrl(null)
   }
 
   const toggleLayer = (layerId: string) => {
@@ -401,12 +410,13 @@ export default function Detect() {
     }
   }
 
-  const runDetection = async () => {
+  const runDetection = async (mode: AnalysisMode) => {
     if (!selectedFile) return
+    setAnalysisMode(mode)
     setIsProcessing(true)
 
     try {
-      const result = await analyzeSpatialImage(selectedFile)
+      const result = await analyzeSpatialImage(selectedFile, mode)
       if (!result.success) {
         alert(`Analysis Failed: ${result.error.message}\n${result.error.details || ''}`)
         return
@@ -437,6 +447,9 @@ export default function Detect() {
       setViewMode('results')
       setZoom(1)
       setShowOriginal(false)
+      setNamingVisualizationUrl(
+        mode === 'naming_analysis' ? result.naming_visualization_data_url || null : null,
+      )
       saveLatestAnalysis(result)
     } catch (err) {
       alert('An unexpected error occurred during analysis.')
@@ -554,15 +567,25 @@ export default function Detect() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-stone-900 text-sm truncate">{selectedFile.name}</p>
-                    <p className="text-xs text-stone-500">Ready for block detection</p>
+                    <p className="text-xs text-stone-500">
+                      Ready for {ANALYSIS_MODE_LABELS[analysisMode]}
+                    </p>
                   </div>
                 </div>
-                <button
-                  onClick={runDetection}
-                  className="w-full sm:w-auto px-5 py-3 bg-teal-600 text-white rounded-xl font-semibold text-sm hover:bg-teal-700 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-soft"
-                >
-                  <ImageIcon className="w-4 h-4" /> Analyze Blocks
-                </button>
+                <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={() => void runDetection('block_analysis')}
+                    className="w-full px-4 py-3 bg-teal-600 text-white rounded-xl font-semibold text-sm hover:bg-teal-700 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-soft"
+                  >
+                    <ImageIcon className="w-4 h-4" /> Block Analysis
+                  </button>
+                  <button
+                    onClick={() => void runDetection('naming_analysis')}
+                    className="w-full px-4 py-3 bg-stone-100 text-stone-700 rounded-xl font-semibold text-sm hover:bg-stone-200 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 border border-stone-200"
+                  >
+                    <ImageIcon className="w-4 h-4" /> Naming Analysis
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -576,6 +599,7 @@ export default function Detect() {
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="bg-[#fafaf9] pt-16 h-screen flex flex-col"
     >
+      <LoadingOverlay isVisible={isProcessing} onComplete={() => {}} />
       <div className="bg-white border-b border-stone-200 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <button
@@ -595,6 +619,28 @@ export default function Detect() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => void runDetection('block_analysis')}
+            disabled={!selectedFile || isProcessing}
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              analysisMode === 'block_analysis'
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
+            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            Block Analysis
+          </button>
+          <button
+            onClick={() => void runDetection('naming_analysis')}
+            disabled={!selectedFile || isProcessing}
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              analysisMode === 'naming_analysis'
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
+            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            Naming Analysis
+          </button>
           <button
             onClick={handleExportGeoJSON}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors"
@@ -741,7 +787,11 @@ export default function Detect() {
             style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.25s ease' }}
           >
             <img
-              src={previewUrl || ''}
+              src={
+                analysisMode === 'naming_analysis' && !showOriginal && namingVisualizationUrl
+                  ? namingVisualizationUrl
+                  : (previewUrl || '')
+              }
               alt="Detected imagery"
               crossOrigin="anonymous"
               className="block w-[min(760px,88vw)] aspect-[4/3] object-cover rounded-xl shadow-medium select-none"
@@ -749,11 +799,76 @@ export default function Detect() {
               onLoad={handleResultImageLoad}
             />
 
-            {!showOriginal && (
+            {!showOriginal && !(analysisMode === 'naming_analysis' && namingVisualizationUrl) && (
               <svg className="absolute inset-0 w-full h-full rounded-xl overflow-hidden" viewBox="0 0 100 100" preserveAspectRatio="none">
                 {displayAssets.map(({ asset, layer, shape, center, bboxCorners, polygon, line }) => {
                   const color = layer.color || '#888'
                   const isHovered = hoveredAssetId === asset.unique_id
+                  const minX = Math.min(...bboxCorners.map((point) => point.x))
+                  const maxX = Math.max(...bboxCorners.map((point) => point.x))
+                  const minY = Math.min(...bboxCorners.map((point) => point.y))
+                  const maxY = Math.max(...bboxCorners.map((point) => point.y))
+                  const width = Math.max(maxX - minX, 0.45)
+                  const height = Math.max(maxY - minY, 0.45)
+
+                  if (analysisMode === 'naming_analysis') {
+                    const labelClass = (asset.subcategory || 'unknown')
+                      .trim()
+                      .toLowerCase()
+                      .replace(/\s+/g, '_')
+                    const confidenceScore = Math.max(
+                      0,
+                      Math.min(asset.confidence_percent / 100, 1),
+                    )
+                    const label = `${labelClass} ${confidenceScore.toFixed(2)}`
+                    const labelWidth = Math.min(98, Math.max(14, label.length * 1.65))
+                    const labelHeight = 5.2
+                    const labelX = Math.max(0.4, Math.min(minX, 99.6 - labelWidth))
+                    const labelY =
+                      minY > 6
+                        ? minY - labelHeight
+                        : Math.max(0.4, Math.min(maxY + 0.5, 99.6 - labelHeight))
+
+                    return (
+                      <g
+                        key={asset.unique_id}
+                        onMouseEnter={() => setHoveredAssetId(asset.unique_id)}
+                        onMouseLeave={() => setHoveredAssetId(null)}
+                        className="cursor-pointer"
+                      >
+                        <rect
+                          x={minX}
+                          y={minY}
+                          width={width}
+                          height={height}
+                          fill="none"
+                          stroke="#1d4ed8"
+                          strokeWidth={isHovered ? 0.75 : 0.55}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                        <rect
+                          x={labelX}
+                          y={labelY}
+                          width={labelWidth}
+                          height={labelHeight}
+                          fill="#1d4ed8"
+                          stroke="#1d4ed8"
+                          strokeWidth={0.2}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                        <text
+                          x={labelX + 0.9}
+                          y={labelY + 3.65}
+                          fill="#ffffff"
+                          fontSize={3.9}
+                          fontWeight={700}
+                          fontFamily="monospace"
+                        >
+                          {label}
+                        </text>
+                      </g>
+                    )
+                  }
 
                   if (shape === 'line') {
                     const strokeWidth = layer.layer_id === 'roads' ? (isHovered ? 1.1 : 0.8) : (isHovered ? 0.65 : 0.38)
@@ -816,12 +931,6 @@ export default function Detect() {
                     )
                   }
 
-                  const minX = Math.min(...bboxCorners.map((point) => point.x))
-                  const maxX = Math.max(...bboxCorners.map((point) => point.x))
-                  const minY = Math.min(...bboxCorners.map((point) => point.y))
-                  const maxY = Math.max(...bboxCorners.map((point) => point.y))
-                  const width = Math.max(maxX - minX, 0.45)
-                  const height = Math.max(maxY - minY, 0.45)
                   const shrink = 0.72
                   const drawWidth = Math.max(width * shrink, 0.35)
                   const drawHeight = Math.max(height * shrink, 0.35)
