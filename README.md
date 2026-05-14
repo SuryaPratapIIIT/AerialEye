@@ -1,5 +1,7 @@
 # AerialEye - AI-Powered Spatial Asset Management System
 
+<img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/e230d756-192d-4b4e-9cb3-3605b8da44ed" />
+
 AerialEye is an end-to-end spatial analysis platform for satellite, aerial, and drone imagery/video.
 It combines frontend visualization, backend AI/CV processing, GIS-ready outputs, and building-height estimation from shadows.
 
@@ -24,6 +26,9 @@ The project currently supports:
 - Output:
   - Structured JSON (`data`, `transformed`)
   - Frontend-renderable normalized geometry (0..100 coordinate system)
+  
+  <img width="1536" height="861" alt="image" src="https://github.com/user-attachments/assets/be51f347-f672-4989-a0e2-a05f78c827d9" />
+
 
 ### 2) Naming Analysis (`naming_analysis`)
 - Endpoint: `POST /api/analyze` with `analysis_mode=naming_analysis`
@@ -35,7 +40,9 @@ The project currently supports:
   - Builds normalized assets + statistics
   - Returns YOLO-rendered frame as visualization data URL
 - Output extras:
-  - `naming_visualization_data_url`
+
+<img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/d56d54db-ea39-4365-bedd-ab71afc7f19c" />
+
 
 ### 3) Asset Map (`asset_map_analysis`)
 - Endpoint: `POST /api/analyze` with `analysis_mode=asset_map_analysis`
@@ -45,7 +52,9 @@ The project currently supports:
   - Category-wise object generation and area/coverage computation
   - Blended asset map overlay generation
 - Output extras:
-  - `asset_map_visualization_data_url`
+
+<img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/053a9c8b-3772-4d69-b196-e366d8ff70d6" />
+
 
 ### 4) Video Analysis (`video_analysis`)
 - Endpoint: `POST /api/analyze-video`
@@ -55,8 +64,8 @@ The project currently supports:
   - Overlay drawing + info panel in output video
   - Aggregated counts/coverage metadata in response
 - Output extras:
-  - `video_result_url` (download/stream via backend)
-  - `video_metadata` (`processed_frames`, `detected_frames`, `fps`, `frame_stride`, etc.)
+
+https://github.com/user-attachments/assets/1382b558-7c87-404c-96c5-b0cf9a3d2993
 
 ## New Feature: Building Height Estimation (Shadow-Based 3D Approximation)
 
