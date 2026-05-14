@@ -451,7 +451,7 @@ export default function Landing() {
       <footer className="py-8 border-t border-stone-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-stone-500 text-sm">© 2026 SpatialScan AI. Built for Indian Railways Hackathon.</p>
+            <p className="text-stone-500 text-sm">© 2026 AerialEye. Built for Indian Railways Hackathon.</p>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-stone-500">Powered by</span>
               <span className="text-amber-700 font-semibold">DIGIT</span>

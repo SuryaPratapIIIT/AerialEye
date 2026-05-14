@@ -1,6 +1,6 @@
-# RailVision - AI-Powered Spatial Asset Management System
+# AerialEye - AI-Powered Spatial Asset Management System
 
-RailVision is an end-to-end spatial analysis platform for satellite, aerial, and drone imagery/video.
+AerialEye is an end-to-end spatial analysis platform for satellite, aerial, and drone imagery/video.
 It combines frontend visualization, backend AI/CV processing, GIS-ready outputs, and building-height estimation from shadows.
 
 The project currently supports:
@@ -330,4 +330,3 @@ npx tsc --noEmit
 ## Security Note
 
 Do not commit real API keys into source control. Use environment variables or secret management for production deployments.
-

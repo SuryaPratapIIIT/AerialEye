@@ -43,7 +43,7 @@ export default function Navbar() {
               <Satellite className="w-4.5 h-4.5 text-white" strokeWidth={2.2} />
             </motion.div>
             <span className="font-['Space_Grotesk'] font-semibold text-lg text-stone-900 tracking-tight">
-              SpatialScan<span className="text-teal-600">AI</span>
+              Aerial<span className="text-teal-600">Eye</span>
             </span>
           </Link>
 

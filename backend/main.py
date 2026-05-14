@@ -22,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
-logger = logging.getLogger("spatialscan.backend")
+logger = logging.getLogger("aerialeye.backend")
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
@@ -43,14 +43,14 @@ ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".mpeg", ".
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024
 ANALYSIS_MODES = {"block_analysis", "naming_analysis", "asset_map_analysis"}
-VIDEO_OUTPUT_DIR = Path(tempfile.gettempdir()) / "spatialscan_video_outputs"
+VIDEO_OUTPUT_DIR = Path(tempfile.gettempdir()) / "aerialeye_video_outputs"
 VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-HEIGHT_OUTPUT_DIR = Path(tempfile.gettempdir()) / "spatialscan_height_outputs"
+HEIGHT_OUTPUT_DIR = Path(tempfile.gettempdir()) / "aerialeye_height_outputs"
 HEIGHT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 VIDEO_RESULT_PATHS: Dict[str, Path] = {}
 
 app = FastAPI(
-    title="SpatialScan AI Analysis API",
+    title="AerialEye Analysis API",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -97,7 +97,7 @@ def _register_video_output(output_path: str) -> str:
 def health() -> Dict[str, Any]:
     return {
         "status": "ok",
-        "service": "spatialscan-vision-analysis",
+        "service": "aerialeye-vision-analysis",
         "vision_api_key_loaded": bool(os.getenv("VISION_API_KEY")),
     }
 

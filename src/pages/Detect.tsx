@@ -31,16 +31,7 @@ interface DisplayAsset {
   line: DisplayPoint[]
 }
 
-interface SampleImage {
-  id: string
-  name: string
-  description: string
-  url: string
-}
-
 const TARGET_ASPECT_RATIO = 4 / 3
-const LOCAL_SAMPLE_BASES = ['image1', 'image2', 'image3'] as const
-const LOCAL_SAMPLE_EXTENSIONS = ['', '.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff'] as const
 const ANALYSIS_MODE_LABELS: Record<AnalysisMode, string> = {
   block_analysis: 'Block Analysis',
   naming_analysis: 'Naming Analysis',
@@ -163,24 +154,6 @@ function formatHeightM(height: number): string {
   return height.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 }
 
-async function resolveSampleImageUrl(baseName: string): Promise<string | null> {
-  for (const extension of LOCAL_SAMPLE_EXTENSIONS) {
-    const candidate = `/${baseName}${extension}`
-    try {
-      const response = await fetch(candidate, { method: 'GET', cache: 'no-store' })
-      if (!response.ok) continue
-      const contentType = response.headers.get('content-type') || ''
-      if (contentType.startsWith('image/')) return candidate
-      const blob = await response.blob()
-      if (blob.type.startsWith('image/')) return candidate
-      if (extension === '' && blob.size > 0) return candidate
-    } catch {
-      // Try next candidate path.
-    }
-  }
-  return null
-}
-
 export default function Detect() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -196,7 +169,6 @@ export default function Detect() {
   const [exportingGeoJSON, setExportingGeoJSON] = useState(false)
   const [exportingCSV, setExportingCSV] = useState(false)
   const [imageNaturalSize, setImageNaturalSize] = useState<{ width: number; height: number } | null>(null)
-  const [sampleImages, setSampleImages] = useState<SampleImage[]>([])
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('block_analysis')
   const [modeVisualizationUrl, setModeVisualizationUrl] = useState<string | null>(null)
   const [modeVideoUrl, setModeVideoUrl] = useState<string | null>(null)
@@ -229,33 +201,6 @@ export default function Detect() {
     },
     [],
   )
-
-  useEffect(() => {
-    let active = true
-
-    const loadSamples = async () => {
-      const resolved = await Promise.all(
-        LOCAL_SAMPLE_BASES.map(async (baseName, index) => {
-          const url = await resolveSampleImageUrl(baseName)
-          if (!url) return null
-          return {
-            id: baseName,
-            name: `Sample ${index + 1}`,
-            description: `Local sample image (${baseName})`,
-            url,
-          } as SampleImage
-        }),
-      )
-
-      if (!active) return
-      setSampleImages(resolved.filter((item): item is SampleImage => item !== null))
-    }
-
-    void loadSamples()
-    return () => {
-      active = false
-    }
-  }, [])
 
   const comparisonData = useMemo(
     () => (analysisResult ? getRenderableLayers(analysisResult) : []),
@@ -418,31 +363,6 @@ export default function Detect() {
     maxSize: 500 * 1024 * 1024,
     multiple: false,
   })
-
-  const handleSampleImage = useCallback(
-    async (url: string, name: string) => {
-      try {
-        const response = await fetch(url)
-        if (!response.ok) throw new Error(`Failed to load sample image (${response.status})`)
-        const blob = await response.blob()
-        const file = new File([blob], `${name.replace(/\s+/g, '_').toLowerCase()}.jpg`, {
-          type: blob.type || 'image/jpeg',
-        })
-        setSelectedFile(file)
-        setAnalysisMode('block_analysis')
-        setPreviewFromFile(file)
-        setAnalysisResult(null)
-        setEnabledLayers([])
-        setHoveredAssetId(null)
-        setImageNaturalSize(null)
-        setModeVisualizationUrl(null)
-        setModeVideoUrl(null)
-      } catch (err) {
-        console.error('Failed to load local sample image as file:', err)
-      }
-    },
-    [setPreviewFromFile],
-  )
 
   const clearSelection = () => {
     setSelectedFile(null)
@@ -613,37 +533,6 @@ export default function Detect() {
                   </div>
                 </div>
               </div>
-
-              {sampleImages.length > 0 && (
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="h-px flex-1 max-w-[80px] bg-stone-200" />
-                    <span className="text-stone-400 text-sm font-medium">Or use local samples</span>
-                    <div className="h-px flex-1 max-w-[80px] bg-stone-200" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {sampleImages.map((sample) => (
-                      <motion.button
-                        key={sample.id}
-                        whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                        onClick={() => void handleSampleImage(sample.url, sample.name)}
-                        className="bg-white rounded-xl overflow-hidden text-left group border border-stone-200 hover:border-teal-300 hover:shadow-medium transition-all duration-200"
-                      >
-                        <div className="aspect-video relative overflow-hidden bg-stone-100">
-                          <img
-                            src={sample.url} alt={sample.name} crossOrigin="anonymous"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h5 className="font-semibold text-stone-900 text-sm">{sample.name}</h5>
-                          <p className="text-xs text-stone-500 mt-0.5 line-clamp-1">{sample.description}</p>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <motion.div

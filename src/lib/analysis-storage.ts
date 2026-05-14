@@ -1,6 +1,6 @@
 import type { AnalysisApiSuccess } from '../types/analysis'
 
-const STORAGE_KEY = 'spatialscan:last-analysis:v1'
+const STORAGE_KEY = 'aerialeye:last-analysis:v1'
 
 export function saveLatestAnalysis(result: AnalysisApiSuccess): void {
   try {
