@@ -1,0 +1,26 @@
+name: Keep Hugging Face Backend Awake
+
+on:
+  schedule:
+    # Run every 12 minutes (Hugging Face Spaces sleep after ~15-30 minutes of inactivity)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-backend:
+    name: Ping HF Space Health Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend Endpoint
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL || 'https://prfct-suraj-aerialeye-backend.hf.space' }}
+        run: |
+          echo "Pinging backend at ${BACKEND_URL}/api/health ..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${BACKEND_URL}/api/health")
+          echo "HTTP Response Status Code: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Backend is active and healthy!"
+          else
+            echo "⚠️ Backend returned status code $RESPONSE. Retrying with verbose output..."
+            curl -v --max-time 45 "${BACKEND_URL}/api/health" || true
+          fi

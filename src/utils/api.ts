@@ -50,6 +50,19 @@ function toErrorPayload(message: string, details = '', code = 'analysis_request_
   }
 }
 
+export async function pingBackendHealth(): Promise<boolean> {
+  const endpoints = resolveCandidateEndpoints('/api/health')
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, { method: 'GET' })
+      if (response.ok) return true
+    } catch {
+      // Ignore errors during pre-warm ping
+    }
+  }
+  return false
+}
+
 async function parseErrorResponse(response: Response): Promise<AnalysisApiError> {
   try {
     const payload = await response.json()
