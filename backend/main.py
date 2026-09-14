@@ -93,6 +93,15 @@ def _register_video_output(output_path: str) -> str:
     return result_id
 
 
+@app.get("/")
+def root() -> Dict[str, Any]:
+    return {
+        "message": "AerialEye Vision Analysis API is running",
+        "docs": "/api/docs",
+        "health": "/api/health",
+    }
+
+
 @app.get("/api/health")
 def health() -> Dict[str, Any]:
     return {
