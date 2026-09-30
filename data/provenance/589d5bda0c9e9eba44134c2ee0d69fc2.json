@@ -1,0 +1,41 @@
+{
+  "scene": {
+    "scene_id": "589d5bda0c9e9eba44134c2ee0d69fc2",
+    "sensor": "unknown",
+    "product_level": "unknown",
+    "acquisition_datetime": "2026-09-28T19:02:53Z",
+    "date_source": "fallback",
+    "crs": "pixel",
+    "transform_json": "[]",
+    "width": 0,
+    "height": 0,
+    "resolution_m": 0.0,
+    "bounds_native_json": "[]",
+    "minlon": 0.0,
+    "minlat": 0.0,
+    "maxlon": 0.0,
+    "maxlat": 0.0,
+    "band_names_json": "[]",
+    "nodata": -9999.0,
+    "georeferenced": false,
+    "cloud_mask_available": false,
+    "ingested_at": 1790622174.1777084,
+    "pipeline_version": "geospatial-v1",
+    "source_type": "LEGACY"
+  },
+  "files": [
+    {
+      "id": "cc47a9d5-80f6-4011-a91c-3616ed02fb40",
+      "scene_id": "589d5bda0c9e9eba44134c2ee0d69fc2",
+      "path": "C:\\Users\\Suraj\\AppData\\Local\\Temp\\pytest-of-Suraj\\pytest-4\\test_process_folder0\\raw\\legacy_drone_shot.jpg",
+      "band_role": "legacy_drone_shot",
+      "sha256": "323982c8947d29cab20d05f48ad22a0d2257ac701a9ef4147f40646f39e85598",
+      "size_bytes": 825
+    }
+  ],
+  "tiles_count": 1,
+  "versions": {
+    "pipeline": "geospatial-v1",
+    "rasterio": "1.5.1"
+  }
+}

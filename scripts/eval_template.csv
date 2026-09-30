@@ -1,0 +1,6 @@
+query,tile_id,relevance
+river,1001,2
+river,1002,1
+river,1003,0
+farmland,2001,2
+village,3001,2

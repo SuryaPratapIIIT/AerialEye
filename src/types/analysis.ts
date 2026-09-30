@@ -1,90 +1,12 @@
-export type CategoryName =
-  | 'Properties & Buildings'
-  | 'Trees & Green Cover'
-  | 'Parks & Open Spaces'
-  | 'Water Bodies'
-  | 'Roads & Footpaths'
-  | 'Drains & Sewage'
-  | 'Vehicles & Parking'
-  | 'Waste Dumps'
-  | 'Solar Panels'
-  | string
-
-export interface NormalizedPoint {
-  x: number
-  y: number
-}
-
-export interface BoundingBox {
-  x_min: number
-  y_min: number
-  x_max: number
-  y_max: number
-}
-
-export interface DetectedAsset {
-  unique_id: string
-  category: CategoryName
-  subcategory: string
-  confidence_percent: number
-  estimated_count: number
-  estimated_area_sq_m: number
-  estimated_dimensions_m: {
-    length: number
-    width: number
+// Existing analysis types (preserved)
+export interface AnalysisApiError {
+  success: false
+  request_id?: string
+  error: {
+    code: string
+    message: string
+    details?: string
   }
-  estimated_coverage_percent: number
-  condition_status: string
-  maintenance_priority: string
-  center_coordinates: NormalizedPoint
-  bounding_box: BoundingBox
-  polygon_coordinates: NormalizedPoint[]
-  visual_description: string
-  estimation_basis: string
-  shadow_length_pixels?: number
-  shadow_length_meters?: number
-  estimated_height_meters?: number
-}
-
-export interface ImageAnalysis {
-  scene_type: string
-  image_quality: string
-  estimated_total_area_sq_m: number
-  overall_detection_confidence_percent: number
-  dominant_land_use: string
-}
-
-export interface SummaryStatistics {
-  total_assets_detected: number
-  green_cover_percent: number
-  built_up_percent: number
-  road_network_percent: number
-  water_body_percent: number
-  open_space_percent: number
-}
-
-export interface CategoryStatisticsItem {
-  count: number
-  total_area_sq_m: number
-  coverage_percent: number
-}
-
-export type CategoryStatistics = Record<string, CategoryStatisticsItem>
-
-export interface RiskAnalysis {
-  encroachment_risk: string
-  drainage_risk: string
-  environmental_risk: string
-  flood_risk: string
-}
-
-export interface StructuredAnalysis {
-  image_analysis: ImageAnalysis
-  summary_statistics: SummaryStatistics
-  detected_assets: DetectedAsset[]
-  category_statistics: CategoryStatistics
-  risk_analysis: RiskAnalysis
-  ai_insights: string[]
 }
 
 export interface LeafletPolygon {
@@ -92,11 +14,9 @@ export interface LeafletPolygon {
   layer_id: string
   category: string
   subcategory: string
+  coordinates: [number, number][]
   color: string
   confidence_percent: number
-  coordinates: [number, number][]
-  bbox_coordinates: [number, number][]
-  center: [number, number]
   maintenance_priority: string
   condition_status: string
 }
@@ -113,109 +33,202 @@ export interface LeafletMarker {
   estimated_area_sq_m: number
 }
 
-export interface TransformedPayload {
-  analytics_cards: {
-    total_assets_detected: number
-    green_cover_percent: number
-    built_up_percent: number
-    road_network_percent: number
-    water_body_percent: number
-    open_space_percent: number
-    overall_detection_confidence_percent: number
-    estimated_total_area_sq_m: number
-    urban_density_score: number
-  }
-  asset_statistics: {
-    category_counts: Record<string, number>
-    category_total_area_sq_m: Record<string, number>
-    maintenance_priorities: Record<string, number>
-    risk_indicators: RiskAnalysis
-  }
-  gis_mapping: {
-    map_center: { lat: number; lng: number }
-    leaflet_polygons: LeafletPolygon[]
-    leaflet_markers: LeafletMarker[]
-    heatmap_points: [number, number, number][]
-  }
-  dashboard_insights: {
-    ai_insights_cards: string[]
-    environmental_risks: string[]
-    encroachment_warnings: string[]
-    drainage_observations: string[]
-    governance_insights: string[]
-  }
-  chart_data: {
-    pie_chart_data: Array<{ name: string; value: number; color: string }>
-    area_distribution_data: Array<{ name: string; area_sq_m: number; color: string }>
-    coverage_graph_data: Array<{ name: string; coverage_percent: number; color: string }>
-    category_comparison_data: Array<{
-      category: string
-      count: number
-      area_sq_m: number
-      coverage_percent: number
-      color: string
-      layer_id: string
-    }>
-  }
-  asset_table_rows: Array<{
-    id: string
-    category: string
-    subcategory: string
-    count: number
-    area_sq_m: number
-    coverage_percent: number
-    confidence_percent: number
-    priority: string
-    condition: string
-    center_coordinates: NormalizedPoint
-    visual_description: string
-    estimation_basis: string
-    shadow_length_pixels?: number
-    shadow_length_meters?: number
-    estimated_height_meters?: number
-  }>
-}
-
 export interface AnalysisApiSuccess {
   success: true
   request_id: string
-  analysis_mode?: 'block_analysis' | 'naming_analysis' | 'asset_map_analysis' | 'video_analysis' | string
-  naming_visualization_data_url?: string
-  asset_map_visualization_data_url?: string
-  height_visualization_data_url?: string
-  height_estimation_output_path?: string
-  height_estimation_json_path?: string
-  height_estimation_config?: {
-    meters_per_pixel: number
-    solar_elevation_angle: number
+  analysis_mode: string
+  data: {
+    detected_assets: unknown[]
+    [key: string]: unknown
   }
-  video_result_url?: string
-  video_metadata?: {
-    processed_frames: number
-    detected_frames?: number
-    source_total_frames: number
-    fps: number
-    width: number
-    height: number
-    output_filename: string
-    frame_stride?: number
-    max_detection_dim?: number
+  transformed: {
+    gis_mapping: {
+      map_center: { lat: number; lng: number }
+      leaflet_polygons: LeafletPolygon[]
+      leaflet_markers: LeafletMarker[]
+    }
+    chart_data: {
+      category_comparison_data: {
+        category: string
+        layer_id: string
+        color: string
+        count: number
+        area_sq_m: number
+        coverage_percent: number
+      }[]
+    }
+    asset_table_rows: {
+      id: string
+      category: string
+      subcategory: string
+      count: number
+      area_sq_m: number
+      coverage_percent: number
+      confidence_percent: number
+      priority: string
+      condition: string
+      center_coordinates: { x: number; y: number }
+      shadow_length_pixels?: number
+      shadow_length_meters?: number
+      estimated_height_meters?: number
+    }[]
+    [key: string]: unknown
   }
-  data: StructuredAnalysis
-  transformed: TransformedPayload
   warnings: string[]
-}
-
-export interface AnalysisApiErrorPayload {
-  code: string
-  message: string
-  details?: string
-}
-
-export interface AnalysisApiError {
-  success: false
-  request_id?: string
-  error: AnalysisApiErrorPayload
+  [key: string]: unknown
 }
 
 export type AnalysisApiResponse = AnalysisApiSuccess | AnalysisApiError
+
+// ============================================================
+// New AerialEye Types
+// ============================================================
+
+export type DataLabel = 'REAL' | 'HEURISTIC' | 'DEMO' | 'UNAVAILABLE'
+
+export interface SceneResult {
+  asset_id: string
+  scene_id: string
+  source: string
+  sensor: string
+  acquisition_time: string
+  quality_score: number
+  cloud_cover: number
+  similarity_score: number
+  thumbnail_b64: string
+  bbox: number[]
+  crs: string
+  label: DataLabel
+  tags: string[]
+}
+
+export interface SearchResponse {
+  query?: string
+  results: SceneResult[]
+  total: number
+  method: string
+  model?: string
+  label: DataLabel
+  note?: string
+}
+
+export interface SceneDetail {
+  asset_id: string
+  scene_id: string
+  source: string
+  sensor: string
+  acquisition_time: string
+  quality_score: number
+  cloud_cover: number
+  thumbnail_b64: string
+  crs: string
+  bbox: number[]
+  resolution: number
+  bands: unknown[]
+  ingestion_ts: number
+  processing_version: string
+  file_path: string
+  label: DataLabel
+}
+
+export interface TemporalObservation {
+  asset_id: string
+  scene_id: string
+  source: string
+  sensor: string
+  acquisition_time: string
+  quality_score: number
+  cloud_cover: number
+  thumbnail_b64: string
+  is_reference: boolean
+  label: DataLabel
+}
+
+export interface ObservationsResponse {
+  reference_asset_id: string
+  observations: TemporalObservation[]
+  total: number
+  label: DataLabel
+}
+
+export interface ChangeAnalysisResult {
+  success: boolean
+  candidate_id?: string
+  scene_before?: SceneResult
+  scene_after?: SceneResult
+  change_score: number
+  confidence: number
+  change_type: string
+  change_type_description: string
+  earliest_obs: string
+  quality_flags: string[]
+  change_map_b64: string
+  method: string
+  label: DataLabel
+  note?: string
+  error?: string
+}
+
+export type ReviewStatus = 'NEW' | 'CONFIRMED' | 'REJECTED' | 'NEEDS_REVIEW'
+
+export interface ReviewItem {
+  candidate_id: string
+  status: ReviewStatus
+  change_score: number
+  confidence: number
+  change_type: string
+  earliest_obs: string
+  quality_flags: string[]
+  method: string
+  label: DataLabel
+  processing_ts: number
+  change_map_b64: string
+  scene_before: SceneResult | null
+  scene_after: SceneResult | null
+  decision: {
+    notes: string
+    analyst_id: string
+    timestamp: number
+  } | null
+}
+
+export interface ReviewQueue {
+  items: ReviewItem[]
+  total: number
+  status_filter: string | null
+}
+
+export interface IndexStats {
+  scene_count: number
+  embedding_count: number
+  change_candidate_count: number
+  analyst_decision_count: number
+  db_size_bytes: number
+}
+
+export interface ModelStatus {
+  clip_available: boolean
+  text_model_available: boolean
+  faiss_available: boolean
+  faiss_vector_count: number
+  label: DataLabel
+}
+
+export interface DataStatus {
+  index_stats: IndexStats
+  model_status: ModelStatus
+  yolo_available: boolean
+  vision_api_key_loaded: boolean
+  data_dir: string
+}
+
+export interface IngestResult {
+  success: boolean
+  status: 'ingested' | 'skipped'
+  asset_id: string
+  scene_id?: string
+  quality_score?: number
+  embedding_available?: boolean
+  label?: DataLabel
+  reason?: string
+}

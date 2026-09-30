@@ -1,0 +1,188 @@
+ingestion:
+  tile_size: 256
+  overlap: 32
+  edge_tiles: drop
+  min_valid_fraction: 0.5
+  nodata_fraction_threshold: 0.5
+masks:
+  sentinel2_scl:
+    cloud_shadow:
+    - 3
+    cloud:
+    - 8
+    - 9
+    cirrus:
+    - 10
+    snow:
+    - 11
+    valid:
+    - 4
+    - 5
+    - 6
+  landsat_qa:
+    cloud_shadow_bit: 4
+    snow_bit: 5
+    cloud_bit: 3
+    cirrus_bit: 2
+embedding:
+  model: clip-vit-base-patch32
+  device: cpu
+  batch_size: 64
+  input_size: 224
+  reflectance_scale: 10000.0
+  reflectance_clip: 0.3
+  gamma: 0.8
+  exclude_cloudy_from_index_above: 0.8
+  min_valid_fraction: 0.5
+  use_hnsw: false
+  hnsw_threshold: 100000
+  hnsw_M: 32
+  hnsw_ef_construction: 200
+  hnsw_ef_search: 64
+search:
+  deduplicate_overlapping: true
+  deduplicate_iou_threshold: 0.8
+  max_candidates_for_exact: 5000
+  average_prompt_templates: true
+  null_cloud_fraction: include
+  prompt_templates:
+  - a satellite image of {query}
+  - an aerial photo of {query}
+change:
+  pipeline_version: change-v1
+  min_usable_fraction: 0.6
+  min_overlap: 0.5
+  min_polygon_usable_fraction: 0.7
+  target_resolution_m: 10.0
+  max_shift_px: 5.0
+  min_shift_px: 0.1
+  min_registration_correlation: 0.3
+  reject_poor_registration: false
+  mask_dilation_px: 3
+  blue_haze_threshold: 0.25
+  brightness_outlier_sigma: 3.0
+  no_mask_confidence_cap: 0.5
+  irmad_iterations: 4
+  irmad_exclude_pct: 0.2
+  min_stable_pixels: 500
+  sigma_k: 3.0
+  abs_min_ndvi: 0.08
+  abs_min_ndbi: 0.08
+  abs_min_mndwi: 0.1
+  abs_min_bsi: 0.08
+  water_mndwi_threshold: 0.0
+  builtup_ndbi_threshold: 0.05
+  vegetation_ndvi_threshold: 0.3
+  min_area_m2: 400.0
+  morph_open_px: 1
+  morph_close_px: 2
+  edge_alignment_threshold: 0.55
+  compactness_min: 0.15
+  score_weights:
+    ndvi: 0.25
+    ndbi: 0.3
+    mndwi: 0.2
+    bsi: 0.15
+    structural: 0.1
+  unclassified_confidence_min: 0.75
+  report_seasonal: false
+  season_window_days: 45
+  prefer_same_season: true
+  opposite_season_doy_diff: 90
+  min_persistence_obs: 1
+  cloud_proximity_radius_px: 15
+  cloud_neighbourhood_mask_frac: 0.35
+  allow_cross_sensor: false
+  cross_sensor_confidence_cap: 0.55
+  phenology_ndvi_only_as_seasonal: true
+  confidence_weights:
+    usable_fraction: 0.15
+    magnitude_sigma: 0.25
+    persistence: 0.15
+    registration: 0.1
+    rule_consistency: 0.15
+    shape: 0.1
+    same_season: 0.1
+  confidence_penalties:
+    no_mask: 0.7
+    single_observation: 0.75
+    cloud_proximity: 0.8
+    poor_registration: 0.7
+    opposite_season: 0.85
+  high_confidence: 0.75
+  medium_confidence: 0.5
+  return_low_confidence: false
+  index_formulas:
+    NDVI: (B08 - B04) / (B08 + B04)
+    NDBI: (B11 - B08) / (B11 + B08)
+    MNDWI: (B03 - B11) / (B03 + B11)
+    BSI: ((B11 + B04) - (B08 + B02)) / ((B11 + B04) + (B08 + B02))
+  rules:
+  - name: water_extent_increase
+    output_type: water_extent_increase
+    direction: appearance
+    conditions:
+    - mndwi_before <= water_mndwi_threshold
+    - mndwi_after > water_mndwi_threshold
+    - d_mndwi > abs_mndwi
+  - name: water_extent_decrease
+    output_type: water_extent_decrease
+    direction: disappearance
+    conditions:
+    - mndwi_before > water_mndwi_threshold
+    - mndwi_after <= water_mndwi_threshold
+    - d_mndwi < -abs_mndwi
+  - name: construction
+    output_type: construction
+    direction: appearance
+    conditions:
+    - d_ndvi < -abs_ndvi
+    - d_ndbi > abs_ndbi
+    - ndbi_after > builtup_ndbi_threshold
+    - (ndvi_before > vegetation_ndvi_threshold * 0.5) or (bsi_before > 0)
+  - name: clearance
+    output_type: clearance
+    direction: disappearance
+    conditions:
+    - d_ndvi < -abs_ndvi
+    - d_bsi > abs_bsi
+    - ndbi_after <= builtup_ndbi_threshold + 0.05
+  - name: road_development
+    output_type: road_development
+    direction: appearance
+    conditions:
+    - compactness < compactness_min
+    - aspect >= 3.0
+    - d_ndvi < -abs_ndvi * 0.5
+    - (d_ndbi > abs_ndbi * 0.5) or (d_bsi > abs_bsi * 0.5)
+  - name: seasonal_veg_expansion
+    output_type: seasonal_or_uncertain
+    direction: expansion
+    conditions:
+    - ndvi_before > vegetation_ndvi_threshold
+    - ndvi_after > vegetation_ndvi_threshold * 0.5
+    - abs(d_ndvi) > abs_ndvi
+    - abs(d_ndbi) < abs_ndbi
+    - d_ndvi > 0
+  - name: seasonal_veg_contraction
+    output_type: seasonal_or_uncertain
+    direction: contraction
+    conditions:
+    - ndvi_before > vegetation_ndvi_threshold
+    - ndvi_after > vegetation_ndvi_threshold * 0.5
+    - abs(d_ndvi) > abs_ndvi
+    - abs(d_ndbi) < abs_ndbi
+    - d_ndvi <= 0
+  - name: vegetation_growth
+    output_type: vegetation_growth
+    direction: expansion
+    conditions:
+    - abs(d_ndvi) > abs_ndvi
+    - d_ndvi > 0
+  - name: vegetation_loss
+    output_type: seasonal_or_uncertain
+    direction: contraction
+    conditions:
+    - abs(d_ndvi) > abs_ndvi
+    - d_ndvi < 0
+    - abs(d_ndbi) < abs_ndbi

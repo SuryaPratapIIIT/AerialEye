@@ -1,0 +1,49 @@
+{
+  "scene": {
+    "scene_id": "b15811758128a894c1085202511d198e",
+    "sensor": "Sentinel-2",
+    "product_level": "L2A",
+    "acquisition_datetime": "2024-03-15T05:36:41Z",
+    "date_source": "filename",
+    "crs": "EPSG:32630",
+    "transform_json": "[10.0, 0.0, 300000.0, 0.0, -10.0, 4000000.0]",
+    "width": 512,
+    "height": 512,
+    "resolution_m": 10.0,
+    "bounds_native_json": "[300000.0, 3994880.0, 305120.0, 4000000.0]",
+    "minlon": -5.222391385436554,
+    "minlat": 36.077969777182886,
+    "maxlon": -5.16426913183725,
+    "maxlat": 36.125137644453844,
+    "band_names_json": "[\"1\"]",
+    "nodata": 0.0,
+    "georeferenced": true,
+    "cloud_mask_available": true,
+    "ingested_at": 1790622174.5714607,
+    "pipeline_version": "geospatial-v1",
+    "source_type": "REAL"
+  },
+  "files": [
+    {
+      "id": "3de42900-c39a-48cc-953c-cd36bb146e6b",
+      "scene_id": "b15811758128a894c1085202511d198e",
+      "path": "C:\\Users\\Suraj\\AppData\\Local\\Temp\\pytest-of-Suraj\\pytest-4\\test_process_folder0\\raw\\S2A_MSIL2A_20240315T053641_B04.tif",
+      "band_role": "S2A_MSIL2A_20240315T053641_B04",
+      "sha256": "48f4b1c35174c4170e650fd24d80c235f8cdbf9896e6f11bf469de605f07a870",
+      "size_bytes": 525047
+    },
+    {
+      "id": "716f4310-bd3b-4271-8ec9-8065c34fbd6f",
+      "scene_id": "b15811758128a894c1085202511d198e",
+      "path": "C:\\Users\\Suraj\\AppData\\Local\\Temp\\pytest-of-Suraj\\pytest-4\\test_process_folder0\\raw\\S2A_MSIL2A_20240315T053641_SCL.tif",
+      "band_role": "S2A_MSIL2A_20240315T053641_SCL",
+      "sha256": "3e1616ef6e72673dac27cf7fee1ebcf33bec5833e8fb50fc0fb85ee0224253fd",
+      "size_bytes": 262708
+    }
+  ],
+  "tiles_count": 4,
+  "versions": {
+    "pipeline": "geospatial-v1",
+    "rasterio": "1.5.1"
+  }
+}

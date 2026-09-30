@@ -1,0 +1,25 @@
+{
+  "models": [
+    {
+      "name": "clip-vit-base-patch32",
+      "version": "openai-vit-b-32-1.0",
+      "embedding_dim": 512,
+      "licence": "MIT",
+      "source_url": "https://huggingface.co/openai/clip-vit-base-patch32",
+      "weight_file": "models/clip-vit-base-patch32/",
+      "sha256": null,
+      "note": "Place local HF snapshot or open_clip_pytorch_model.bin under this directory. SHA-256 filled on first successful load."
+    },
+    {
+      "name": "remoteclip",
+      "version": "remoteclip-vit-b-32-1.0",
+      "embedding_dim": 512,
+      "licence": "Apache-2.0",
+      "source_url": "https://github.com/ChenDelong1999/RemoteCLIP",
+      "weight_file": "models/remoteclip/open_clip_pytorch_model.bin",
+      "sha256": null,
+      "note": "Download RemoteCLIP ViT-B-32 open_clip checkpoint while online; system refuses to fetch when offline."
+    }
+  ],
+  "updated_note": "Declared for offline AerialEye retrieval (Prompt 2)"
+}

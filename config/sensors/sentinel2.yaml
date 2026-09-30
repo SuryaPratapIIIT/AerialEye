@@ -1,0 +1,18 @@
+name: "Sentinel-2"
+band_mapping:
+  B02: "B02"
+  B03: "B03"
+  B04: "B04"
+  B08: "B08"
+  B11: "B11"
+  B12: "B12"
+  SCL: "SCL"
+cloud_mask:
+  band: "SCL"
+  cloud_classes: [8, 9, 10]
+  shadow_classes: [3]
+  snow_classes: [11]
+  nodata_classes: [0]
+reflectance_scale: 10000.0
+reflectance_offset: 0.0
+resolution_m: 10.0

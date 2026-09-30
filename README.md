@@ -1,341 +1,188 @@
-# AerialEye - AI-Powered Spatial Asset Management System
+# AerialEye - Discover → Analyze → Verify
 
 <img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/e230d756-192d-4b4e-9cb3-3605b8da44ed" />
 
-AerialEye is an end-to-end spatial analysis platform for satellite, aerial, and drone imagery/video.
-It combines frontend visualization, backend AI/CV processing, GIS-ready outputs, and building-height estimation from shadows.
+AerialEye is an end-to-end spatial analysis platform for satellite, aerial, and drone imagery.
 
-The project currently supports:
-- Image upload + analysis
-- Video upload + analysis
-- Multi-mode detection workflows
-- Overlay rendering and interactive frontend visualization
-- Area/count summaries and building-height metrics
-- GIS export (GeoJSON + CSV)
-- Processed video export + metadata JSON-style payloads
+It combines semantic retrieval, temporal change analysis, and human-in-the-loop analyst review into one unified local-first platform. It also preserves legacy block and naming analysis functionality.
 
-## Implemented Analysis Modes
+## Core Capabilities
 
-### 1) Block Analysis (`block_analysis`)
-- Endpoint: `POST /api/analyze` with `analysis_mode=block_analysis`
-- Pipeline:
-  - Tries VLM-based analysis (Groq/OpenAI-compatible chat completion endpoint)
-  - Normalizes and validates schema
-  - Recomputes category stats and transformed frontend payload
-  - Uses local heuristic pixel-block generation for robust, synchronized mapped assets
-- Output:
-  - Structured JSON (`data`, `transformed`)
-  - Frontend-renderable normalized geometry (0..100 coordinate system)
-  
-  <img width="1536" height="861" alt="image" src="https://github.com/user-attachments/assets/be51f347-f672-4989-a0e2-a05f78c827d9" />
+1. **Semantic Search**: Search for images using natural language (e.g., *"newly built structures near a river"*) powered by local CLIP embeddings and a FAISS vector index.
+2. **Temporal Change Detection**: Compare scenes over time. AerialEye aligns scenes using ORB keypoint matching, normalizes illumination with histogram matching, and computes a heuristic change overlay.
+3. **Analyst Review Queue**: Change candidates are queued for human review. Analysts can mark them as `Confirm`, `Reject`, or `Needs Review`.
+4. **Similar Site Discovery**: Select any asset to instantly find similar locations via nearest-neighbor vector search.
+5. **Local-First & Offline**: Built on SQLite, FAISS, OpenCV, and SentenceTransformers. Once models are cached locally on first run, all core discovery and analysis features operate entirely offline.
+6. **Data Honesty**: All data, detections, and change scores are labeled with provenance (e.g., `REAL`, `HEURISTIC`, `DEMO`) ensuring analysts know the origin of the intelligence.
 
+---
 
-### 2) Naming Analysis (`naming_analysis`)
-- Endpoint: `POST /api/analyze` with `analysis_mode=naming_analysis`
-- Model: `spatial_asset_yolo11n_best.pt` (Ultralytics YOLO)
-- Pipeline:
-  - Loads YOLO model (cached)
-  - Runs inference with configurable confidence/IoU thresholds
-  - Maps YOLO classes to project categories
-  - Builds normalized assets + statistics
-  - Returns YOLO-rendered frame as visualization data URL
-- Output extras:
+## The Workflow
 
-<img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/d56d54db-ea39-4365-bedd-ab71afc7f19c" />
+### 1. Discover (`/search`)
+Ingest imagery (TIFF, JPG, PNG) on the **Data** page. Then, navigate to **Search** to find relevant scenes using natural language or image similarity. Filter by date, source, and quality.
 
+### 2. Analyze (`/analyze`)
+Select a scene and view its temporal observations. Pick a "Before" and "After" scene. Click **Run Change Analysis** to perform image alignment and generate a change layer with a confidence score.
 
-### 3) Asset Map (`asset_map_analysis`)
-- Endpoint: `POST /api/analyze` with `analysis_mode=asset_map_analysis`
-- Pipeline:
-  - OpenCV/Numpy based semantic mask extraction
-  - Morphological cleanup + contour extraction
-  - Category-wise object generation and area/coverage computation
-  - Blended asset map overlay generation
-- Output extras:
+### 3. Verify (`/review`)
+Generated candidates go to the **Review** queue. Analysts view the before/after/overlay evidence alongside provenance data to make a final verified decision.
 
-<img width="1536" height="864" alt="image" src="https://github.com/user-attachments/assets/053a9c8b-3772-4d69-b196-e366d8ff70d6" />
+---
 
+## Technical Architecture
 
-### 4) Video Analysis (`video_analysis`)
-- Endpoint: `POST /api/analyze-video`
-- Pipeline:
-  - Frame-by-frame OpenCV-based asset detection
-  - Frame stride + resize knobs for performance tuning
-  - Overlay drawing + info panel in output video
-  - Aggregated counts/coverage metadata in response
-- Output extras:
+- **Frontend**: React 18, Vite, TailwindCSS, Framer Motion, Leaflet.
+- **Backend**: FastAPI (Python 3).
+- **Database**: SQLite (via `sqlite-utils`) for zero-config relational metadata.
+- **Vector Search**: FAISS (Facebook AI Similarity Search) CPU-based indexing.
+- **AI Models**: `openai/clip-vit-base-patch32` and `all-MiniLM-L6-v2` loaded locally via `sentence-transformers`.
 
-https://github.com/user-attachments/assets/1382b558-7c87-404c-96c5-b0cf9a3d2993
+---
 
-## New Feature: Building Height Estimation (Shadow-Based 3D Approximation)
+## Setup & Running
 
-Height estimation is integrated automatically in the image analysis pipeline and runs after each image mode.
+### Prerequisites
+- Node.js
+- Python 3.9+
+- Local python environment
 
-### Where it runs
-- Integrated in `backend/main.py` inside `POST /api/analyze` after base analysis output is prepared.
-- Reuses already detected building assets (does not launch a separate building detector when building boxes already exist).
-
-### Core formula
-- `H = S * tan(theta)`
-- `S`: shadow length in meters
-- `theta`: solar elevation angle
-
-### Implemented module
-```text
-height_estimation/
-  detector.py
-  shadow_analysis.py
-  geometry.py
-  visualization.py
-  utils.py
-```
-
-### What gets added per building
-- `shadow_length_pixels`
-- `shadow_length_meters`
-- `estimated_height_meters`
-
-### Additional output artifacts
-- `analyzed_output.jpg` (height overlay image)
-- `results.json` (building-level height records)
-- API extras:
-  - `height_visualization_data_url`
-  - `height_estimation_output_path`
-  - `height_estimation_json_path`
-  - `height_estimation_config`
-
-## Frontend Integration
-
-Main detection UI: `src/pages/Detect.tsx`
-
-Implemented behavior:
-- Upload image/video
-- Mode selection buttons:
-  - `Block Analysis`
-  - `Naming Analysis`
-  - `Asset Map`
-  - `Video Analysis`
-- Result rendering:
-  - Image overlay (for image modes)
-  - Processed video playback (for video mode)
-- Right-side summary card:
-  - Area/count by category
-  - Total objects
-  - Total area (`m2`)
-  - Building-height summary (`count`, `avg|min|max`)
-- Bottom-left strip:
-  - Coordinates
-  - Mapped count
-  - Average building height
-- Tooltip/hover card:
-  - Per-asset details including `estimated_height_meters` when available
-
-GIS page (`/gis`):
-- Reads latest analysis from local storage
-- Layer toggles, markers, polygons
-- GeoJSON export
-
-## Backend API
-
-### Health
-- `GET /api/health`
-
-### Image analysis
-- `POST /api/analyze`
-- Form fields:
-  - `image` (JPG/PNG/TIFF/WEBP)
-  - `analysis_mode` in:
-    - `block_analysis`
-    - `naming_analysis`
-    - `asset_map_analysis`
-
-### Video analysis
-- `POST /api/analyze-video`
-- Form field:
-  - `video` (MP4/MOV/AVI/MKV/WEBM/MPEG/M4V)
-
-### Video result fetch
-- `GET /api/video-results/{result_id}`
-
-## Data Contracts
-
-Core response:
-- `success`
-- `request_id`
-- `data` (structured analysis)
-- `transformed` (frontend/GIS payload)
-- `warnings`
-
-Height-enhanced asset item (building entries):
-```json
-{
-  "class": "building",
-  "bbox": [x1, y1, x2, y2],
-  "shadow_length_pixels": 120,
-  "shadow_length_meters": 24,
-  "estimated_height_meters": 18.5
-}
-```
-
-Video response also includes:
-- `video_result_url`
-- `video_metadata`
-
-## Project Structure
-
-```text
-backend/
-  main.py
-  services/
-    vision_engine.py
-    naming_engine.py
-    asset_map_engine.py
-    video_asset_engine.py
-    area_utils.py
-
-height_estimation/
-  detector.py
-  shadow_analysis.py
-  geometry.py
-  visualization.py
-  utils.py
-
-src/
-  pages/
-    Detect.tsx
-    GIS.tsx
-    Landing.tsx
-  utils/api.ts
-  types/analysis.ts
-```
-
-## Setup
-
-## 1) Install frontend dependencies
+### 1. Install Dependencies
 ```bash
+# Frontend
 npm install
-```
 
-## 2) Install backend dependencies
-```bash
+# Backend
 pip install -r requirements.txt
 ```
 
-## 3) Configure environment variables
-
-Create/update `.env` (example values):
+### 2. Configure Environment
+Create/update a `.env` file at the project root:
 ```bash
-# External vision API for block analysis text reasoning
+# Required for frontend to reach backend
+VITE_ANALYSIS_API_BASE=http://localhost:8000
+
+# Optional: Vision API for legacy block analysis text reasoning
 VISION_API_KEY=your_key_here
 VISION_API_URL=https://api.groq.com/openai/v1/chat/completions
 VISION_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 
-# Frontend -> backend base URL
-VITE_ANALYSIS_API_BASE=http://localhost:8000
-
-# Area calibration
-METERS_PER_PIXEL=1.0
-
-# Naming analysis (YOLO)
+# Legacy Naming analysis (YOLO)
 YOLO_MODEL_PATH=./spatial_asset_yolo11n_best.pt
-YOLO_CONF_THRESHOLD=0.25
-YOLO_IOU_THRESHOLD=0.45
-
-# Height estimation
-HEIGHT_METERS_PER_PIXEL=0.2
-HEIGHT_SOLAR_ELEVATION_ANGLE=45
-
-# Video performance tuning
-VIDEO_ANALYSIS_FRAME_STRIDE=2
-VIDEO_ANALYSIS_TARGET_DETECTION_FRAMES=300
-VIDEO_ANALYSIS_MAX_DETECTION_DIM=960
-
-# CORS
-CORS_ALLOW_ORIGINS=*
-CORS_ALLOW_CREDENTIALS=false
 ```
 
-## 4) Run backend
+### 3. Start the Servers
+Start both development servers in separate terminals (or concurrently):
 ```bash
+# Starts FastAPI at http://localhost:8000
 npm run dev:backend
-```
 
-## 5) Run frontend
-```bash
+# Starts Vite at http://localhost:5173
 npm run dev:frontend
 ```
 
-Default ports:
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
-
-## Exported Outputs
-
-- GeoJSON export from frontend result/GIS view
-- CSV export from frontend result view
-- Processed output video from video analysis endpoint
-- Height-estimation artifacts:
-  - `analyzed_output.jpg`
-  - `results.json`
-
-## Performance Notes
-
-For faster video completion:
-- Increase `VIDEO_ANALYSIS_FRAME_STRIDE`
-- Lower `VIDEO_ANALYSIS_MAX_DETECTION_DIM`
-- Keep `VIDEO_ANALYSIS_TARGET_DETECTION_FRAMES` moderate
-
-Trade-off:
-- Higher speed can reduce temporal/spatial detail.
-
-## Assumptions and Limitations
-
-### Spatial area metrics
-- Area in `m2` depends on `METERS_PER_PIXEL`.
-- Different modes may produce different area totals because they use different detection strategies:
-  - heuristic blocks vs YOLO boxes vs CV masks vs frame-level aggregates.
-
-### Height estimation constraints
-- Single-image shadow analysis is an approximation.
-- Sensitive to:
-  - sun angle assumptions
-  - shadow visibility/occlusion
-  - low contrast
-  - top-down scenes with weak cast shadows
-- Current visualization is 2D overlay with geometric cues (bbox, contour, direction line, label), not full mesh-based 3D reconstruction.
-
-### Video counting semantics
-- Current video counts represent detection events over analyzed frames (not persistent multi-object identity tracking IDs).
-
-## Troubleshooting
-
-### `HTTP 502` / `Unable to reach analysis service`
-1. Ensure backend is running:
-   - `npm run dev:backend`
-2. Verify frontend base URL:
-   - `VITE_ANALYSIS_API_BASE=http://localhost:8000`
-3. Check model/dependency availability:
-   - `pip install -r requirements.txt`
-   - YOLO `.pt` file exists at configured path.
-4. Check upload size/type limits:
-   - image max `50 MB`
-   - video max `500 MB`
-
-### Build checks
+### 4. Seed Demo Data (First Run Only)
+Run the demo seeder to generate synthetic satellite tiles, compute their embeddings, and index them. This enables you to immediately test search and change detection.
 ```bash
-npm run build
-npx tsc --noEmit
+python scripts/seed_demo_data.py
+```
+> Note: First run will download the CLIP model weights (~350MB).
+
+---
+
+## Semantic retrieval (tiles, offline)
+
+### Pre-download model weights (once, while online)
+
+```bash
+# CLIP ViT-B/32 (default)
+huggingface-cli download openai/clip-vit-base-patch32 --local-dir models/clip-vit-base-patch32
+
+# Optional: RemoteCLIP (place open_clip checkpoint)
+# models/remoteclip/open_clip_pytorch_model.bin
 ```
 
-## Roadmap / Future Upgrades
+Licence / origin are declared in `models/MODEL_CARD.json`. Runtime sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` and **will not download** if weights are missing.
 
-- Visual doodle-driven analysis interaction
-- Real-time video segmentation pipeline (streaming)
-- Stronger multi-frame temporal smoothing for height estimates
-- Persistent tracked IDs in video analytics
-- WebODM integration (orthophoto + DSM/DTM workflow)
-- Stereo / depth-assisted height estimation for improved 3D reliability
+### Ingest scenes then embed tiles
 
-## Security Note
+```bash
+python ingest.py ./data/raw
+python embed.py                          # uses embedding.model from config.yaml
+python embed.py --model remoteclip --batch-size 64 --device cpu
+python embed.py --watch                  # embed as Prompt 1 produces new tiles
+```
 
-Do not commit real API keys into source control. Use environment variables or secret management for production deployments.
+Indexes are append-only FAISS `IndexIDMap2` files under `indexes/<model_name>.faiss` (IDs = `tiles.tile_id`). Raw vectors are also saved to `indexes/<model_name>_vectors.npy` for later clustering. New scenes only encode pending tiles — the index is never rebuilt during normal operation.
+
+### Switch models
+
+Edit `config.yaml`:
+
+```yaml
+embedding:
+  model: "remoteclip"   # or "clip-vit-base-patch32"
+```
+
+Each model has its own index file; embedding spaces are not compatible. Re-run `embed.py` after switching so that model gets its own `tile_embeddings` rows.
+
+### Search API
+
+- `POST /api/search/text` — `{ "query", "k", "filters" }`
+- `POST /api/search/image` — multipart file and/or `tile_id`
+- `GET /api/tiles/{id}/similar`
+- `POST /api/embed/run`
+- `GET /api/index/status`
+- `GET /api/models`
+
+Default search returns **REAL** tiles only; set `include_legacy` / `include_demo` in filters to include others. Purge demo data with `python scripts/purge_demo.py --dry-run` (full purge rebuilds the index once — the only rebuild path).
+
+### Benchmark / eval
+
+```bash
+python scripts/benchmark_search.py --queries scripts/queries.txt --k 10,20,50
+python scripts/eval_search.py --csv scripts/eval_template.csv --k 5,10
+```
+
+
+## Project Documentation
+Detailed implementation decisions, architecture overviews, and target specs can be found in the `/docs` directory.
+
+
+## Change Detection Pipeline
+
+### How the Pipeline Works
+The new temporal change detection pipeline replaces the legacy ORB-based heuristic with a robust, staged, rule-based approach. It emphasizes precision over recall to suppress false alarms caused by clouds, shadows, seasonal changes, and misregistration.
+
+### Stages and Their Purposes
+1. **Common Grid**: Resamples and aligns before/after images to a shared CRS and resolution based on their overlapping footprints.
+2. **Registration Refinement**: Estimates sub-pixel shifts using phase correlation on gradient-rich bands (like NIR) to correct minor alignment errors.
+3. **Quality Masking**: Builds a joint invalid mask from Sentinel-2/Landsat product QA bands (clouds, shadows, snow) plus spectral haze safeguards and dilates them to catch edges.
+4. **Radiometric Normalization**: Normalizes the 'after' image to the 'before' image using IR-MAD style iterative stable pixel selection and linear regression, or falls back to histogram matching.
+5. **Indices and Differences**: Computes spectral indices (NDVI, NDBI, MNDWI, BSI) and calculates absolute differences and structural gradient differences, normalized by stable-pixel MAD sigma.
+6. **Candidate Extraction**: Combines evidence into a weighted score, thresholds adaptively, extracts regions, and computes compactness and edge-alignment scores.
+7. **Change Typing**: Applies explainable rules to assign a change type (e.g., construction, clearance, water extent variation, road development) and direction.
+8. **False Alarm Suppression**: Suppresses candidates based on opposite seasons, phenology, single observations, cloud proximity, poor registration, and global illumination shifts.
+9. **Confidence Scoring**: Assigns a confidence score (0-1) weighted by usable fraction, signal magnitude, persistence, registration quality, rule consistency, shape, and seasonal pairing.
+10. **Earliest Supporting Observation**: For time-series, finds the earliest scene that supports the detected change using a step-fit changepoint algorithm on the target polygon.
+
+### How to Tune It
+All thresholds are located in config.yaml under the change: section. You can adjust:
+- min_usable_fraction: To filter out heavily cloudy scenes early.
+- score_weights: To prioritize certain indices (e.g., NDBI for urban).
+- confidence_penalties: To strongly penalize candidates near clouds or with poor registration.
+- bs_min_ndvi, bs_min_ndbi, etc.: To raise the floor for what constitutes a valid signal.
+
+## Limitations
+What this rule-based approach cannot do:
+- **Semantic Nuance**: It cannot easily distinguish between functionally different but spectrally identical changes (e.g., a new warehouse roof vs. a large concrete parking lot).
+- **Sub-pixel precision on complex shapes**: It relies on morphological operations and index thresholds, which may struggle with very thin features (e.g., footpaths) that don't trigger the minimum area or structural thresholds.
+- **Severe Phenology without Baseline**: If the time series is sparse, distinguishing agricultural crop cycles from permanent clearance can still be difficult without a multi-year baseline.
+- **Learning from Mistakes**: Being rule-based, it cannot automatically learn from analyst feedback without manual threshold adjustments in config.yaml.
+
+## Assumptions
+- The input imagery is generally georeferenced; the pipeline's registration stage is for *refinement* (sub-pixel or small pixel shifts), not large-scale matching.
+- Masking products (like Sentinel-2 SCL or Landsat QA) are reasonably accurate but need dilation to be conservative.
+- A 'stable' background exists in the pair for radiometric normalization (i.e., the entire AOI hasn't changed).
+- Precision is strictly prioritized over recall.
+

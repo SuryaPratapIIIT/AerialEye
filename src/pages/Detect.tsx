@@ -5,6 +5,7 @@ import {
   Upload, Image as ImageIcon, FileImage, X, Layers,
   Sparkles, ZoomIn, ZoomOut, Eye, EyeOff,
   Maximize2, Minimize2, Download, Check, MapPin, ArrowLeft,
+  Activity, Terminal, Crosshair
 } from 'lucide-react'
 import LoadingOverlay from '../components/LoadingOverlay'
 import { saveLatestAnalysis } from '../lib/analysis-storage'
@@ -436,10 +437,8 @@ export default function Detect() {
         return
       }
 
-      // Primary: get layers from comparison data
       let layers = getRenderableLayers(result).map((layer) => layer.layer_id)
 
-      // Fallback: if empty (AI gave no category stats), derive from detected_assets directly
       if (layers.length === 0) {
         const categoryToLayerId: Record<string, string> = {
           'Properties & Buildings': 'buildings',
@@ -492,54 +491,48 @@ export default function Detect() {
     return (
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="min-h-screen bg-[#fafaf9] pt-20 pb-16"
+        className="min-h-screen pt-20 pb-16 font-mono"
       >
         <LoadingOverlay isVisible={isProcessing} onComplete={() => {}} />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        
+        <div className="container-app py-8 flex flex-col gap-8 max-w-5xl">
           <div className="flex flex-col items-center text-center gap-3 mb-10">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-semibold tracking-wide uppercase border border-teal-100">
-              <Sparkles className="w-3 h-3" /> Spatial Block Detection
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-900/30 text-cyan-400 text-xs font-semibold tracking-wide uppercase border border-cyan-500/30">
+              <Crosshair className="w-3 h-3" /> Spatial Block Detection
             </span>
-            <h1 className="font-['Space_Grotesk'] text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 tracking-tight">
-              Upload &amp; Detect
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wide uppercase">
+              ML Model Analysis
             </h1>
-            <p className="text-stone-500 text-sm sm:text-base max-w-lg">
+            <p className="text-slate-400 text-sm sm:text-base max-w-lg tracking-wider">
               Upload imagery to detect assets as perfectly mapped spatial blocks in real-time.
             </p>
           </div>
 
           {!selectedFile ? (
-            <div className="flex flex-col gap-10">
-              <div
-                {...dz.getRootProps()}
-                className={`relative rounded-2xl p-12 sm:p-16 text-center cursor-pointer transition-all duration-200 bg-white border-2 border-dashed ${
-                  dz.isDragActive ? 'border-teal-500 bg-teal-50/60' : 'border-stone-300 hover:border-teal-400 hover:bg-stone-50'
-                }`}
-              >
-                <input {...dz.getInputProps()} />
-                <div className="flex flex-col items-center gap-4">
-                  <motion.div
-                    animate={{ y: [0, -6, 0] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-teal-50 flex items-center justify-center"
-                  >
-                    <Upload className={`w-7 h-7 sm:w-9 sm:h-9 ${dz.isDragActive ? 'text-teal-700' : 'text-teal-600'}`} />
-                  </motion.div>
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-['Space_Grotesk'] font-semibold text-stone-900 mb-1">
-                      {dz.isDragActive ? 'Drop your file here' : 'Drop image/video here or click to browse'}
-                    </h3>
-                    <p className="text-stone-500 text-sm">JPG, PNG, TIFF, WEBP, MP4, MOV, AVI, MKV, WEBM - up to 500MB</p>
-                  </div>
-                </div>
-              </div>
+            <div className="glass-panel p-8 rounded-2xl h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent shadow-[0_0_10px_rgba(6,182,212,1)]" />
+               <div
+                 {...dz.getRootProps()}
+                 className={`w-full max-w-2xl min-h-[250px] border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative group ${
+                   dz.isDragActive ? 'border-cyan-500 bg-cyan-900/20 shadow-[inset_0_0_30px_rgba(6,182,212,0.2)]' : 'border-slate-700 hover:border-cyan-500/50 hover:bg-slate-800/50'
+                 }`}
+               >
+                 <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                 <input {...dz.getInputProps()} />
+                 <Upload className={`w-12 h-12 mb-4 transition-colors duration-300 ${dz.isDragActive ? 'text-cyan-400' : 'text-slate-600 group-hover:text-cyan-500/50'}`} />
+                 <p className="text-white font-bold tracking-widest uppercase text-lg mb-2">
+                   {dz.isDragActive ? 'Initiate Transfer' : 'Transmit Assets'}
+                 </p>
+                 <p className="text-slate-500 text-xs">Drop payload here or click to interface</p>
+                 <p className="text-slate-600 text-[10px] uppercase tracking-widest mt-4">Formats: JPG, PNG, TIFF, WEBP, MP4, MOV // 500MB Max</p>
+               </div>
             </div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-soft"
+              className="glass-panel rounded-2xl overflow-hidden border border-slate-700 shadow-xl"
             >
-              <div className="relative bg-stone-100">
+              <div className="relative bg-slate-950 flex items-center justify-center">
                 {isVideoFile(selectedFile) ? (
                   <video
                     src={previewUrl || ''}
@@ -557,47 +550,50 @@ export default function Detect() {
                 )}
                 <button
                   onClick={clearSelection}
-                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center text-stone-600 hover:text-stone-900 shadow-medium hover:scale-105 active:scale-95 transition-transform"
+                  className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-stone-200">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
-                    <FileImage className="w-5 h-5 text-teal-600" />
+              
+              <div className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-t border-slate-800 bg-slate-900/50">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-xl bg-cyan-900/30 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                    <FileImage className="w-6 h-6 text-cyan-400" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-stone-900 text-sm truncate">{selectedFile.name}</p>
-                    <p className="text-xs text-stone-500">
-                      Ready for {ANALYSIS_MODE_LABELS[analysisMode]}
+                    <p className="font-bold text-white text-sm truncate uppercase tracking-widest">{selectedFile.name}</p>
+                    <p className="text-[10px] text-cyan-500 mt-1 uppercase tracking-widest flex items-center gap-2">
+                       <Activity className="w-3 h-3" />
+                       Ready for {ANALYSIS_MODE_LABELS[analysisMode]}
                     </p>
                   </div>
                 </div>
-                <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-4 gap-2">
+                
+                <div className="w-full sm:w-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <button
                     onClick={() => void runDetection('block_analysis')}
-                    className="w-full px-4 py-3 bg-teal-600 text-white rounded-xl font-semibold text-sm hover:bg-teal-700 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 shadow-soft"
+                    className="w-full px-4 py-3 bg-cyan-950/50 hover:bg-cyan-900 border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 hover:text-cyan-300 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all inline-flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
                   >
-                    <ImageIcon className="w-4 h-4" /> Block Analysis
+                    <ImageIcon className="w-3.5 h-3.5" /> Block Analysis
                   </button>
                   <button
                     onClick={() => void runDetection('naming_analysis')}
-                    className="w-full px-4 py-3 bg-stone-100 text-stone-700 rounded-xl font-semibold text-sm hover:bg-stone-200 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 border border-stone-200"
+                    className="w-full px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all inline-flex items-center justify-center gap-2"
                   >
-                    <ImageIcon className="w-4 h-4" /> Naming Analysis
+                    <Terminal className="w-3.5 h-3.5" /> Naming Analysis
                   </button>
                   <button
                     onClick={() => void runDetection('asset_map_analysis')}
-                    className="w-full px-4 py-3 bg-stone-100 text-stone-700 rounded-xl font-semibold text-sm hover:bg-stone-200 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 border border-stone-200"
+                    className="w-full px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all inline-flex items-center justify-center gap-2"
                   >
-                    <ImageIcon className="w-4 h-4" /> Asset Map
+                    <MapPin className="w-3.5 h-3.5" /> Asset Map
                   </button>
                   <button
                     onClick={() => void runDetection('video_analysis')}
-                    className="w-full px-4 py-3 bg-stone-100 text-stone-700 rounded-xl font-semibold text-sm hover:bg-stone-200 active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2 border border-stone-200"
+                    className="w-full px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all inline-flex items-center justify-center gap-2"
                   >
-                    <ImageIcon className="w-4 h-4" /> Video Analysis
+                    <Activity className="w-3.5 h-3.5" /> Video Analysis
                   </button>
                 </div>
               </div>
@@ -611,133 +607,132 @@ export default function Detect() {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="bg-[#fafaf9] pt-16 h-screen flex flex-col"
+      className="bg-[#0a0d14] pt-14 h-screen flex flex-col font-mono"
     >
       <LoadingOverlay isVisible={isProcessing} onComplete={() => {}} />
-      <div className="bg-white border-b border-stone-200 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3">
+      
+      {/* Top Action Bar */}
+      <div className="bg-slate-900/80 backdrop-blur-md border-b border-cyan-900/30 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.5)] z-40 relative">
+        <div className="flex items-center gap-4">
           <button
             onClick={clearSelection}
-            className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors font-medium group"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-colors group bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-cyan-500/50"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden sm:inline">New Detection</span>
+            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="hidden sm:inline">New Target</span>
           </button>
-          <span className="hidden sm:block w-px h-4 bg-stone-200" />
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-            <span className="text-sm font-semibold text-stone-800">
+          
+          <span className="hidden sm:block w-px h-6 bg-slate-700/50" />
+          
+          <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+            <span className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] animate-pulse" />
+            <span className="text-sm font-bold text-white tracking-widest">
               {analysisResult?.transformed.analytics_cards.total_assets_detected || 0}
             </span>
-            <span className="text-sm text-stone-500">{isVideoAnalysisMode ? 'detections mapped' : 'blocks mapped'}</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest">{isVideoAnalysisMode ? 'Detections' : 'Blocks'} Mapped</span>
           </div>
         </div>
+        
         <div className="flex items-center gap-2">
           <button
             onClick={() => void runDetection('block_analysis')}
             disabled={!selectedFile || isProcessing}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] uppercase font-bold tracking-widest border transition-all ${
               analysisMode === 'block_analysis'
-                ? 'bg-teal-600 text-white border-teal-600'
-                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
-            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                ? 'bg-cyan-950/50 text-cyan-400 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border-slate-700 hover:border-cyan-500/30'
+            } ${!selectedFile || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Block Analysis
           </button>
           <button
             onClick={() => void runDetection('naming_analysis')}
             disabled={!selectedFile || isProcessing}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] uppercase font-bold tracking-widest border transition-all ${
               analysisMode === 'naming_analysis'
-                ? 'bg-teal-600 text-white border-teal-600'
-                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
-            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                ? 'bg-cyan-950/50 text-cyan-400 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border-slate-700 hover:border-cyan-500/30'
+            } ${!selectedFile || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Naming Analysis
           </button>
           <button
             onClick={() => void runDetection('asset_map_analysis')}
             disabled={!selectedFile || isProcessing}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] uppercase font-bold tracking-widest border transition-all ${
               analysisMode === 'asset_map_analysis'
-                ? 'bg-teal-600 text-white border-teal-600'
-                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
-            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+                ? 'bg-cyan-950/50 text-cyan-400 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border-slate-700 hover:border-cyan-500/30'
+            } ${!selectedFile || isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Asset Map
           </button>
-          <button
-            onClick={() => void runDetection('video_analysis')}
-            disabled={!selectedFile || isProcessing}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-              analysisMode === 'video_analysis'
-                ? 'bg-teal-600 text-white border-teal-600'
-                : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-200'
-            } ${!selectedFile || isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            Video Analysis
-          </button>
+          
+          <span className="w-px h-6 bg-slate-700/50 mx-1" />
+
           <button
             onClick={handleExportGeoJSON}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-[10px] uppercase font-bold tracking-widest border border-slate-700 transition-colors"
           >
-            {exportingGeoJSON ? <Check className="w-3.5 h-3.5 text-teal-600" /> : <Download className="w-3.5 h-3.5" />}
-            {exportingGeoJSON ? 'Saved!' : 'GeoJSON'}
+            {exportingGeoJSON ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
+            {exportingGeoJSON ? 'Saved' : 'GeoJSON'}
           </button>
           <button
             onClick={handleExportCSV}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold border border-stone-200 transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-[10px] uppercase font-bold tracking-widest border border-slate-700 transition-colors"
           >
-            {exportingCSV ? <Check className="w-3.5 h-3.5 text-teal-600" /> : <Download className="w-3.5 h-3.5" />}
-            {exportingCSV ? 'Saved!' : 'CSV'}
+            {exportingCSV ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
+            {exportingCSV ? 'Saved' : 'CSV'}
           </button>
         </div>
       </div>
 
-      <div ref={fullscreenRef} className="flex-1 relative bg-stone-100 overflow-hidden">
-        <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
-          <div className="pointer-events-auto flex items-center bg-white/96 backdrop-blur-md rounded-xl border border-stone-200/80 shadow-medium overflow-hidden h-9">
+      <div ref={fullscreenRef} className="flex-1 relative bg-slate-950 overflow-hidden">
+        
+        {/* Floating Controls Overlay */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between gap-4 pointer-events-none">
+          <div className="pointer-events-auto flex items-center glass-panel rounded-xl overflow-hidden h-10 border border-slate-700 shadow-xl">
             <button
               onClick={() => setZoom((z) => Math.min(z + 0.25, 4))}
-              className="h-full px-3 flex items-center text-stone-600 hover:text-teal-700 hover:bg-stone-50 border-r border-stone-200 transition-colors"
+              className="h-full px-3 flex items-center text-slate-400 hover:text-cyan-400 hover:bg-slate-800 border-r border-slate-700 transition-colors"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
-            <span className="px-3 text-xs font-mono text-stone-500 tabular-nums">{Math.round(zoom * 100)}%</span>
+            <span className="px-4 text-xs font-bold text-cyan-500 tabular-nums bg-slate-900 h-full flex items-center justify-center tracking-widest">{Math.round(zoom * 100)}%</span>
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.25, 0.5))}
-              className="h-full px-3 flex items-center text-stone-600 hover:text-teal-700 hover:bg-stone-50 border-l border-stone-200 transition-colors"
+              className="h-full px-3 flex items-center text-slate-400 hover:text-cyan-400 hover:bg-slate-800 border-l border-slate-700 transition-colors"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="pointer-events-auto flex items-center gap-1.5">
+          <div className="pointer-events-auto flex items-center gap-2">
             <button
               onClick={() => setShowOriginal((value) => !value)}
-              className={`h-9 px-3.5 rounded-xl inline-flex items-center gap-2 shadow-medium border text-sm font-semibold transition-all duration-150 ${
+              className={`h-10 px-4 rounded-xl inline-flex items-center gap-2 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150 ${
                 showOriginal
-                  ? 'bg-teal-600 text-white border-teal-600'
-                  : 'bg-white/96 backdrop-blur-md text-stone-600 hover:text-stone-900 border-stone-200/80'
+                  ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                  : 'glass-panel text-slate-400 hover:text-white border-slate-700'
               }`}
             >
               {showOriginal ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              <span className="hidden sm:inline">{showOriginal ? 'Original' : 'Blocks'}</span>
+              <span className="hidden sm:inline">{showOriginal ? 'Base Image' : 'Overlay Mode'}</span>
             </button>
 
             <div className="relative" ref={layerMenuRef}>
               <button
                 onClick={() => setLayerMenuOpen((value) => !value)}
-                className={`h-9 px-3.5 rounded-xl inline-flex items-center gap-2 shadow-medium border text-sm font-semibold transition-all duration-150 ${
+                className={`h-10 px-4 rounded-xl inline-flex items-center gap-2 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150 ${
                   layerMenuOpen
-                    ? 'bg-teal-600 text-white border-teal-600'
-                    : 'bg-white/96 backdrop-blur-md text-stone-600 hover:text-stone-900 border-stone-200/80'
+                    ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                    : 'glass-panel text-slate-400 hover:text-white border-slate-700'
                 }`}
               >
                 <Layers className="w-4 h-4" />
-                <span className="hidden sm:inline">Layers</span>
+                <span className="hidden sm:inline">Data Layers</span>
                 {!layerMenuOpen && (
-                  <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-bold inline-flex items-center justify-center">
+                  <span className="ml-1 w-5 h-5 rounded bg-cyan-900/50 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold inline-flex items-center justify-center">
                     {enabledLayers.length}
                   </span>
                 )}
@@ -750,37 +745,37 @@ export default function Detect() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.97 }}
                     transition={{ duration: 0.14, ease: 'easeOut' }}
-                    className="absolute right-0 top-11 w-64 bg-white rounded-2xl shadow-large border border-stone-200/80 overflow-hidden z-30"
+                    className="absolute right-0 top-12 w-64 glass-panel rounded-xl shadow-2xl border border-slate-700 overflow-hidden z-30"
                   >
-                    <div className="px-4 pt-3.5 pb-2.5 border-b border-stone-100 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <Layers className="w-3.5 h-3.5" /> Asset Categories
+                    <div className="px-4 py-3 border-b border-slate-700/50 bg-slate-900/80 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+                        <Terminal className="w-3.5 h-3.5" /> Toggle Overlay
                       </span>
-                      <button onClick={() => setLayerMenuOpen(false)} className="text-stone-400 hover:text-stone-700 transition-colors">
+                      <button onClick={() => setLayerMenuOpen(false)} className="text-slate-500 hover:text-white transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="px-2 py-2 flex flex-col gap-0.5 max-h-72 overflow-y-auto">
+                    <div className="p-2 flex flex-col gap-1 max-h-72 overflow-y-auto custom-scrollbar bg-slate-900/40">
                       {comparisonData.map((cls) => {
                         const on = enabledLayers.includes(cls.layer_id)
                         return (
                           <button
                             key={cls.layer_id}
                             onClick={() => toggleLayer(cls.layer_id)}
-                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-all duration-150 ${
-                              on ? 'bg-stone-50 hover:bg-stone-100' : 'opacity-45 hover:opacity-65 hover:bg-stone-50'
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-150 ${
+                              on ? 'bg-slate-800/80 hover:bg-slate-700 border border-slate-700' : 'opacity-60 hover:opacity-100 hover:bg-slate-800 border border-transparent'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="w-3 h-3 rounded-md shrink-0 border border-black/10" style={{ backgroundColor: cls.color }} />
-                              <span className="text-xs font-semibold text-stone-800 truncate">{cls.category}</span>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-2.5 h-2.5 rounded-sm shrink-0 border border-white/20 shadow-[0_0_5px_currentColor]" style={{ backgroundColor: cls.color, color: cls.color }} />
+                              <span className="text-[11px] font-bold text-white uppercase tracking-wider truncate">{cls.category}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="text-[10px] text-stone-400 font-mono tabular-nums">{cls.count}</span>
-                              <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${on ? 'bg-teal-500' : 'bg-stone-200'}`}>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] text-cyan-500/80 font-mono tabular-nums">{cls.count}</span>
+                              <div className={`w-7 h-3.5 rounded-full p-[2px] transition-colors border ${on ? 'bg-cyan-900/80 border-cyan-500/50' : 'bg-slate-900 border-slate-700'}`}>
                                 <motion.div
-                                  className="w-3 h-3 rounded-full bg-white shadow-sm"
-                                  animate={{ x: on ? 16 : 0 }}
+                                  className={`w-2.5 h-2.5 rounded-full shadow-[0_0_5px_currentColor] ${on ? 'bg-cyan-400 text-cyan-400' : 'bg-slate-500 text-transparent'}`}
+                                  animate={{ x: on ? 14 : 0 }}
                                   transition={{ type: 'spring', stiffness: 600, damping: 35 }}
                                 />
                               </div>
@@ -789,18 +784,18 @@ export default function Detect() {
                         )
                       })}
                     </div>
-                    <div className="px-3 pb-3 pt-2 border-t border-stone-100 flex gap-2">
+                    <div className="p-2 border-t border-slate-700/50 bg-slate-900/80 flex gap-2">
                       <button
                         onClick={() => setEnabledLayers(comparisonData.map((item) => item.layer_id))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors"
+                        className="flex-1 py-1.5 rounded text-[10px] uppercase tracking-widest font-bold text-cyan-400 bg-cyan-950/50 hover:bg-cyan-900 border border-cyan-900 hover:border-cyan-500/50 transition-colors"
                       >
-                        All on
+                        Enable All
                       </button>
                       <button
                         onClick={() => setEnabledLayers([])}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors"
+                        className="flex-1 py-1.5 rounded text-[10px] uppercase tracking-widest font-bold text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:text-white transition-colors"
                       >
-                        All off
+                        Disable All
                       </button>
                     </div>
                   </motion.div>
@@ -810,22 +805,23 @@ export default function Detect() {
 
             <button
               onClick={toggleFullscreen}
-              className="w-9 h-9 bg-white/96 backdrop-blur-md rounded-xl flex items-center justify-center text-stone-600 hover:text-teal-700 shadow-medium border border-stone-200/80 transition-colors"
+              className="w-10 h-10 glass-panel rounded-xl flex items-center justify-center text-slate-400 hover:text-cyan-400 shadow-xl border border-slate-700 transition-colors"
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
+        {/* Viewport */}
         <div className="w-full h-full flex items-center justify-center overflow-auto p-6 pt-20 pb-12">
           <div
-            className="relative shrink-0"
+            className="relative shrink-0 border border-slate-800 shadow-[0_0_30px_rgba(0,0,0,0.8)] rounded-xl bg-black"
             style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.25s ease' }}
           >
             {isVideoAnalysisMode ? (
               <video
                 src={!showOriginal && modeVideoUrl ? modeVideoUrl : (previewUrl || '')}
-                className="block w-[min(760px,88vw)] aspect-[4/3] object-cover rounded-xl shadow-medium select-none bg-black"
+                className="block w-[min(760px,88vw)] aspect-[4/3] object-cover rounded-xl select-none bg-black"
                 controls
                 playsInline
               />
@@ -840,7 +836,7 @@ export default function Detect() {
                 }
                 alt="Detected imagery"
                 crossOrigin="anonymous"
-                className="block w-[min(760px,88vw)] aspect-[4/3] object-cover rounded-xl shadow-medium select-none"
+                className="block w-[min(760px,88vw)] aspect-[4/3] object-cover rounded-xl select-none"
                 draggable={false}
                 onLoad={handleResultImageLoad}
               />
@@ -852,7 +848,7 @@ export default function Detect() {
                 (analysisMode === 'naming_analysis' || analysisMode === 'asset_map_analysis') &&
                 modeVisualizationUrl
               ) && (
-              <svg className="absolute inset-0 w-full h-full rounded-xl overflow-hidden" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <svg className="absolute inset-0 w-full h-full rounded-xl overflow-hidden pointer-events-auto" viewBox="0 0 100 100" preserveAspectRatio="none">
                 {displayAssets.map(({ asset, layer, shape, center, bboxCorners, polygon, line }) => {
                   const color = layer.color || '#888'
                   const isHovered = hoveredAssetId === asset.unique_id
@@ -894,7 +890,7 @@ export default function Detect() {
                           width={width}
                           height={height}
                           fill="none"
-                          stroke="#1d4ed8"
+                          stroke="#06b6d4" // cyan-500
                           strokeWidth={isHovered ? 0.75 : 0.55}
                           vectorEffect="non-scaling-stroke"
                         />
@@ -903,15 +899,15 @@ export default function Detect() {
                           y={labelY}
                           width={labelWidth}
                           height={labelHeight}
-                          fill="#1d4ed8"
-                          stroke="#1d4ed8"
+                          fill="#083344" // cyan-950
+                          stroke="#06b6d4"
                           strokeWidth={0.2}
                           vectorEffect="non-scaling-stroke"
                         />
                         <text
                           x={labelX + 0.9}
                           y={labelY + 3.65}
-                          fill="#ffffff"
+                          fill="#22d3ee" // cyan-400
                           fontSize={3.9}
                           fontWeight={700}
                           fontFamily="monospace"
@@ -925,14 +921,14 @@ export default function Detect() {
                   if (shape === 'line') {
                     const strokeWidth = layer.layer_id === 'roads' ? (isHovered ? 1.1 : 0.8) : (isHovered ? 0.65 : 0.38)
                     const dash = layer.layer_id === 'drains' ? '0.9 0.7' : undefined
-                    const strokeColor = layer.layer_id === 'roads' ? '#111827' : color
+                    const strokeColor = color
                     const strokeOpacity = layer.layer_id === 'roads' ? 1 : 0.95
                     return (
                       <g
                         key={asset.unique_id}
                         onMouseEnter={() => setHoveredAssetId(asset.unique_id)}
                         onMouseLeave={() => setHoveredAssetId(null)}
-                        className="cursor-pointer"
+                        className="cursor-pointer drop-shadow-md"
                       >
                           <polyline
                           points={pointsToString(line)}
@@ -960,10 +956,10 @@ export default function Detect() {
                         <polygon
                           points={pointsToString(polygon)}
                           fill={color}
-                          fillOpacity={isHovered ? 0.3 : 0.2}
+                          fillOpacity={isHovered ? 0.5 : 0.2}
                           stroke={color}
                           strokeOpacity={0.95}
-                          strokeWidth={isHovered ? 0.5 : 0.34}
+                          strokeWidth={isHovered ? 0.6 : 0.34}
                           strokeDasharray="0.8 0.6"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -975,7 +971,7 @@ export default function Detect() {
                           r={isHovered ? 0.7 : 0.5}
                           fill={color}
                           fillOpacity={0.9}
-                          stroke="white"
+                          stroke="#fff"
                           strokeWidth={0.22}
                           vectorEffect="non-scaling-stroke"
                         />
@@ -1004,10 +1000,10 @@ export default function Detect() {
                         rx={0.35}
                         ry={0.35}
                         fill={color}
-                        fillOpacity={isHovered ? 0.36 : 0.24}
+                        fillOpacity={isHovered ? 0.5 : 0.24}
                         stroke={color}
                         strokeOpacity={0.95}
-                        strokeWidth={isHovered ? 0.55 : 0.35}
+                        strokeWidth={isHovered ? 0.65 : 0.35}
                         vectorEffect="non-scaling-stroke"
                       />
                     </g>
@@ -1026,34 +1022,34 @@ export default function Detect() {
                   initial={{ opacity: 0, y: 6, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                  className="absolute bottom-14 right-4 bg-white/95 backdrop-blur-md rounded-xl p-4 shadow-xl border border-stone-200/80 z-10 w-[240px]"
+                  className="absolute bottom-16 right-6 glass-panel rounded-xl p-4 shadow-2xl border border-slate-700 z-10 w-[260px] pointer-events-none"
                 >
-                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-stone-100">
-                    <span className="w-3 h-3 rounded-sm border border-black/10 shrink-0" style={{ backgroundColor: layer.color }} />
-                    <span className="font-semibold text-stone-900 text-sm leading-tight">{asset.category}</span>
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-700/50">
+                    <span className="w-3 h-3 rounded-[2px] shrink-0 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: layer.color, color: layer.color }} />
+                    <span className="font-bold text-white text-[11px] uppercase tracking-widest leading-tight">{asset.category}</span>
                   </div>
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-stone-500">Subtype</span>
-                      <span className="font-medium text-stone-800">{asset.subcategory}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                      <span className="text-slate-500 font-bold">Subtype</span>
+                      <span className="font-bold text-cyan-400 bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-900">{asset.subcategory}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-stone-500">Confidence</span>
-                      <span className="font-mono text-stone-800">{asset.confidence_percent.toFixed(1)}%</span>
+                    <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                      <span className="text-slate-500 font-bold">Confidence</span>
+                      <span className="font-bold text-emerald-400">{asset.confidence_percent.toFixed(1)}%</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-stone-500">Est. Area</span>
-                      <span className="font-mono text-stone-800">{asset.estimated_area_sq_m} m2</span>
+                    <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                      <span className="text-slate-500 font-bold">Est. Area</span>
+                      <span className="font-bold text-amber-400">{asset.estimated_area_sq_m} m²</span>
                     </div>
                     {Number.isFinite(asset.estimated_height_meters) && (asset.estimated_height_meters || 0) > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-stone-500">Height</span>
-                        <span className="font-mono text-stone-800">{asset.estimated_height_meters?.toFixed(1)} m</span>
+                      <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                        <span className="text-slate-500 font-bold">Height</span>
+                        <span className="font-bold text-violet-400">{asset.estimated_height_meters?.toFixed(1)} m</span>
                       </div>
                     )}
                   </div>
                   {asset.visual_description && (
-                    <p className="mt-2 text-[10px] text-stone-500 leading-snug border-t border-stone-100 pt-2 italic">
+                    <p className="mt-3 text-[10px] text-slate-400 leading-snug border-t border-slate-700/50 pt-3 italic opacity-80">
                       "{asset.visual_description}"
                     </p>
                   )}
@@ -1063,44 +1059,42 @@ export default function Detect() {
           </AnimatePresence>
         </div>
 
-        <div className="absolute bottom-3 left-3 bg-white/96 backdrop-blur-md rounded-xl px-3 h-8 inline-flex items-center gap-3 text-xs shadow-medium border border-stone-200/80">
-          <span className="inline-flex items-center gap-1.5 text-stone-600">
+        {/* Bottom Left HUD (Coordinates) */}
+        <div className="absolute bottom-4 left-4 glass-panel rounded-xl px-4 h-10 flex items-center gap-4 shadow-xl border border-slate-700 pointer-events-none">
+          <span className="flex items-center gap-2 text-cyan-400 text-[10px] font-bold uppercase tracking-widest">
             <MapPin className="w-3.5 h-3.5" />
             {analysisResult?.transformed.gis_mapping.map_center.lat.toFixed(4)}°N,{' '}
             {analysisResult?.transformed.gis_mapping.map_center.lng.toFixed(4)}°E
           </span>
-          <span className="w-px h-4 bg-stone-200" />
-          <span className="text-stone-500">
-            {mappedCount} {isVideoAnalysisMode ? 'detections mapped' : 'blocks mapped'}
+          <span className="w-px h-5 bg-slate-700" />
+          <span className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">
+            {mappedCount} {isVideoAnalysisMode ? 'detections' : 'blocks'} mapped
           </span>
-          <span className="w-px h-4 bg-stone-200" />
-          <span className="text-stone-500">
-            Avg building height {buildingHeightSummary ? `${formatHeightM(buildingHeightSummary.avg)} m` : 'N/A'}
+          <span className="w-px h-5 bg-slate-700" />
+          <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+            Avg height: {buildingHeightSummary ? <span className="text-white">{formatHeightM(buildingHeightSummary.avg)} m</span> : 'N/A'}
           </span>
         </div>
 
-        <div className="absolute bottom-3 right-3 bg-white/96 backdrop-blur-md rounded-xl p-2.5 shadow-medium border border-stone-200/80 hidden sm:flex flex-col gap-1.5 max-h-64 overflow-y-auto min-w-[290px]">
-          <div className="border-b border-stone-200/80 pb-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500">Area/Count Summary</p>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[10px] text-stone-500">Total objects</span>
-              <span className="text-[10px] text-stone-700 font-mono tabular-nums">{areaCountSummary.totalCount}</span>
+        {/* Bottom Right HUD (Telemetry List) */}
+        <div className="absolute bottom-4 right-4 glass-panel rounded-xl p-3 shadow-xl border border-slate-700 hidden sm:flex flex-col gap-2 max-h-64 overflow-y-auto custom-scrollbar min-w-[320px] pointer-events-auto">
+          <div className="border-b border-cyan-900/50 pb-2 mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-500 flex items-center gap-1.5 mb-2">
+               <Activity className="w-3 h-3" /> Area Distribution
+            </p>
+            <div className="flex items-center justify-between mt-1 text-[10px] uppercase font-bold tracking-widest">
+              <span className="text-slate-500">Total objects</span>
+              <span className="text-cyan-400">{areaCountSummary.totalCount}</span>
             </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[10px] text-stone-500">Total area</span>
-              <span className="text-[10px] text-stone-700 font-mono tabular-nums">
-                {formatAreaSqM(areaCountSummary.totalAreaSqM)} m2
+            <div className="flex items-center justify-between mt-1 text-[10px] uppercase font-bold tracking-widest">
+              <span className="text-slate-500">Total area</span>
+              <span className="text-cyan-400">
+                {formatAreaSqM(areaCountSummary.totalAreaSqM)} m²
               </span>
             </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[10px] text-stone-500">Buildings with height</span>
-              <span className="text-[10px] text-stone-700 font-mono tabular-nums">
-                {buildingHeightSummary?.count ?? 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[10px] text-stone-500">Height (avg|min|max)</span>
-              <span className="text-[10px] text-stone-700 font-mono tabular-nums">
+            <div className="flex items-center justify-between mt-1 text-[10px] uppercase font-bold tracking-widest">
+              <span className="text-slate-500">Height (avg|min|max)</span>
+              <span className="text-cyan-400">
                 {buildingHeightSummary
                   ? `${formatHeightM(buildingHeightSummary.avg)} | ${formatHeightM(buildingHeightSummary.min)} | ${formatHeightM(buildingHeightSummary.max)} m`
                   : 'N/A'}
@@ -1110,20 +1104,20 @@ export default function Detect() {
 
           {areaCountSummary.rows.length > 0 ? (
             areaCountSummary.rows.map((row) => (
-              <div key={row.layerId} className="flex items-start gap-2">
+              <div key={row.layerId} className="flex items-center gap-3 py-1">
                 <span
-                  className="w-2.5 h-2.5 rounded-sm shrink-0 border border-black/10 mt-0.5"
-                  style={{ backgroundColor: row.color }}
+                  className="w-2.5 h-2.5 rounded-[2px] shrink-0 shadow-[0_0_5px_currentColor]"
+                  style={{ backgroundColor: row.color, color: row.color }}
                 />
-                <span className="text-[11px] text-stone-700 font-medium truncate max-w-[130px]">{row.category}</span>
-                <div className="ml-auto pl-2 text-right leading-tight">
-                  <div className="text-[10px] text-stone-500 font-mono tabular-nums">{row.count} objects</div>
-                  <div className="text-[10px] text-stone-500 font-mono tabular-nums">{formatAreaSqM(row.areaSqM)} m2</div>
+                <span className="text-[10px] text-white font-bold uppercase tracking-widest truncate max-w-[120px]">{row.category}</span>
+                <div className="ml-auto pl-2 flex items-center gap-3">
+                  <span className="text-[10px] text-slate-500 font-bold tabular-nums">{row.count} obj</span>
+                  <span className="text-[10px] text-slate-400 font-bold tabular-nums w-16 text-right">{formatAreaSqM(row.areaSqM)} m²</span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-[11px] text-stone-500">No detected assets to summarize.</div>
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center py-2">System Idle</div>
           )}
         </div>
       </div>

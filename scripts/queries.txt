@@ -1,0 +1,7 @@
+river
+farmland
+village
+forest
+urban settlement
+cloud free coastline
+not cloud
